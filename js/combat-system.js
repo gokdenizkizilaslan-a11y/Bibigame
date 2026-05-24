@@ -949,13 +949,26 @@ const CombatSystem = {
         if (!container) return;
         container.innerHTML = '';
         var self = this;
+        var count = this.monsters.length;
+        var isMobile = window.innerWidth <= 600;
+        // Dinamik grid: az canavar -> büyük, çok canavar -> kompakt
+        // Mobilde en fazla 3 sütun
+        var cols;
+        if (count <= 2) cols = count;
+        else if (count <= 3) cols = 3;
+        else cols = isMobile ? 3 : 4;
+        container.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+        if (count >= 4) {
+            container.classList.add('compact');
+        } else {
+            container.classList.remove('compact');
+        }
         this.monsters.forEach(function(m) {
             var box = document.createElement('div');
             box.className = 'monster-mini-box';
             box.id = 'monster-box-' + m.index;
             var rarity = m.rarity || 'D';
             var rarityColor = RARITY_COLOR[rarity] || '#888';
-            var rarityIcon = RARITY_ICON[rarity] || '';
             var portrait = getMonsterPortrait(m.id);
             if (portrait) {
                 box.style.backgroundImage = 'url(' + portrait + ')';
@@ -965,7 +978,7 @@ const CombatSystem = {
             box.style.borderColor = rarityColor;
             box.innerHTML =
                 '<div class=\"monster-overlay\">' +
-                '<span class=\"monster-mini-name\">' + rarityIcon + ' ' + m.name + '</span>' +
+                '<span class=\"monster-mini-name\"><span class=\"monster-rarity-badge\" style=\"background:' + rarityColor + '\">' + rarity + '</span> ' + m.name + '</span>' +
                 '<span class=\"monster-mini-type\" style=\"color:' + rarityColor + '\">' + rarity + ' Seviye</span>' +
                 '<div class=\"hp-bar-container mini-hp\"><div class=\"hp-bar-track mini-track\"><div class=\"hp-bar-fill monster-hp\" id=\"monster-hp-fill-' + m.index + '\"></div></div><span class=\"hp-bar-text\" id=\"monster-hp-text-' + m.index + '\">' + m.currentHp + '/' + m.maxHp + '</span></div>' +
                 '</div>';
@@ -976,6 +989,8 @@ const CombatSystem = {
     hide() {
         document.getElementById('combat-area').style.display = 'none';
         document.getElementById('card-area').style.display = '';
+        var mc = document.getElementById('combat-monsters');
+        if (mc) { mc.classList.remove('compact'); mc.style.gridTemplateColumns = ''; }
         this.state = 'IDLE'; this.isBossFight = false; this.isPartyFight = false;
         this.monsters = []; this.character = null;
         this.partyFighters = []; this.partyMonsters = []; this.partyTurnOrder = [];
@@ -1237,6 +1252,7 @@ const CombatSystem = {
         document.getElementById('card-area').style.display = 'none';
         document.getElementById('combat-area').style.display = 'block';
         var bossBox = document.getElementById('combat-monsters');
+        if (bossBox) { bossBox.classList.remove('compact'); bossBox.style.gridTemplateColumns = '1fr'; }
         if (bossBox) {
             bossBox.innerHTML = '<div id=\"boss-main-box\">' +
                 '<img id=\"boss-portrait\" src=\"' + (CONFIG && CONFIG.bossPortraits ? (CONFIG.bossPortraits[this.bossData.portraitKey] || '') : '') + '\" style=\"max-width:150px;max-height:150px;border-radius:8px;margin-bottom:8px;\">' +
@@ -1392,7 +1408,7 @@ const CombatSystem = {
         if (this.state !== 'PLAYER_TURN') return;
         var fighter = this.fighters[this.currentFighterIndex];
         if (!fighter || !fighter.isPlayer) return;
-        var skill = skillId === 'basic' ? fighter.skills[0] : getSkillById(skillId);
+        var skill = skillId === 'basic' ? fighter.skills[0] : fighter.skills.find(function(s) { return s.id === skillId; });
         if (!skill) return;
         if (fighter.mana < skill.manaCost) return;
         if (fighter.usedThisTurn.indexOf(skill.id) >= 0) return;
@@ -1950,6 +1966,18 @@ const CombatSystem = {
         var monContainer = document.getElementById('combat-monsters');
         if (monContainer) {
             monContainer.innerHTML = '';
+            var monCount = this.partyMonsters.length;
+            var isMobile = window.innerWidth <= 600;
+            var cols;
+            if (monCount <= 2) cols = monCount;
+            else if (monCount <= 3) cols = 3;
+            else cols = isMobile ? 3 : 4;
+            monContainer.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+            if (monCount >= 4) {
+                monContainer.classList.add('compact');
+            } else {
+                monContainer.classList.remove('compact');
+            }
             this.partyMonsters.forEach(function(m) {
                 var rarity = m.rarity || 'D';
                 var rarityColor = RARITY_COLOR[rarity] || '#888';
@@ -1963,7 +1991,7 @@ const CombatSystem = {
                     box.style.backgroundImage = 'url(' + portrait + ')';
                 }
                 box.innerHTML = '<div class="monster-overlay">' +
-                    '<span class="monster-mini-name">' + (RARITY_ICON[rarity]||'') + ' ' + m.name + '</span>' +
+                    '<span class="monster-mini-name"><span class="monster-rarity-badge" style="background:' + rarityColor + '">' + rarity + '</span> ' + m.name + '</span>' +
                     '<span class="monster-mini-type" style="color:' + rarityColor + '">' + rarity + ' Seviye</span>' +
                     '<div class="hp-bar-container mini-hp"><div class="hp-bar-track mini-track"><div class="hp-bar-fill monster-hp" id="party-monster-hp-' + m.index + '"></div></div><span class="hp-bar-text" id="party-monster-hpt-' + m.index + '">' + m.currentHp + '/' + m.maxHp + '</span></div>' +
                     '</div>';

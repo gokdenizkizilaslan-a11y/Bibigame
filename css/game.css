@@ -297,16 +297,13 @@
 }
 /* Çoklu canavar container */
 #combat-monsters {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 8px;
     margin-bottom: 10px;
 }
 .monster-mini-box {
-    flex: 1 1 160px;
-    min-width: 140px;
-    max-width: 240px;
-    height: 160px;
+    width: 100%;
+    height: 140px;
     border: 2px solid rgba(200,80,80,0.4);
     border-radius: 10px;
     position: relative;
@@ -326,7 +323,7 @@
 }
 .monster-overlay {
     background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 55%, transparent 100%);
-    padding: 32px 8px 8px;
+    padding: 28px 8px 8px;
     text-align: center;
     z-index: 1;
     pointer-events: none;
@@ -335,24 +332,72 @@
 .monster-mini-name {
     font-family: var(--font-heading);
     color: var(--red-light);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: block;
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     margin-bottom: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .monster-mini-type {
-    font-size: 0.55rem;
+    font-size: 0.52rem;
     font-style: italic;
     display: block;
     text-shadow: 0 1px 3px rgba(0,0,0,0.8);
     margin-bottom: 5px;
 }
+.monster-rarity-badge {
+    display: inline-block;
+    min-width: 15px;
+    height: 15px;
+    line-height: 15px;
+    border-radius: 3px;
+    font-size: 0.55rem;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+    margin-right: 2px;
+    vertical-align: middle;
+    text-shadow: none;
+}
 .mini-hp { gap: 4px; }
-.mini-track { width: 70px; height: 8px; }
-.mini-hp .hp-bar-text { font-size: 0.55rem; min-width: 32px; text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
+.mini-track { width: 60px; height: 7px; }
+.mini-hp .hp-bar-text { font-size: 0.5rem; min-width: 30px; text-shadow: 0 1px 2px rgba(0,0,0,0.7); }
 .monster-mini-box .hp-bar-fill {
     border-radius: 4px;
-    height: 6px;
+    height: 5px;
+}
+
+/* Çok canavar (4+) kompakt mod */
+#combat-monsters.compact { gap: 4px; }
+#combat-monsters.compact .monster-mini-box {
+    height: 100px;
+    border-radius: 7px;
+}
+#combat-monsters.compact .monster-overlay {
+    padding: 18px 4px 4px;
+}
+#combat-monsters.compact .monster-mini-name {
+    font-size: 0.58rem;
+}
+#combat-monsters.compact .monster-mini-type {
+    font-size: 0.42rem;
+    margin-bottom: 2px;
+}
+#combat-monsters.compact .monster-rarity-badge {
+    min-width: 12px;
+    height: 12px;
+    line-height: 12px;
+    font-size: 0.45rem;
+    border-radius: 2px;
+}
+#combat-monsters.compact .mini-hp { gap: 2px; }
+#combat-monsters.compact .mini-track { width: 42px; height: 5px; }
+#combat-monsters.compact .mini-hp .hp-bar-text { font-size: 0.42rem; min-width: 24px; }
+#combat-monsters.compact .monster-mini-box .hp-bar-fill {
+    height: 3px;
+    border-radius: 2px;
 }
 
 /* Oyuncu kutusu */
@@ -1015,7 +1060,7 @@
 }
 
 /* ===== Boss Fight ===== */
-#boss-main-box { text-align:center; padding:12px; }
+#boss-main-box { text-align:center; padding:12px; grid-column: 1 / -1; }
 #boss-fighters { gap:4px; justify-content:center; }
 .boss-fighter {
     background:rgba(20,16,12,0.6); border:1px solid var(--border-dark);
@@ -1255,6 +1300,20 @@
     .action-sub { font-size: 0.65rem; }
     .action-cost { font-size: 0.7rem; }
     #combat-area { max-width: 100%; }
+    .monster-mini-box { height: 110px; }
+    .monster-overlay { padding: 22px 5px 5px; }
+    .monster-mini-name { font-size: 0.65rem; }
+    .monster-mini-type { font-size: 0.46rem; }
+    .monster-rarity-badge { min-width: 13px; height: 13px; line-height: 13px; font-size: 0.48rem; }
+    .mini-track { width: 50px; height: 6px; }
+    .mini-hp .hp-bar-text { font-size: 0.45rem; min-width: 26px; }
+    #combat-monsters.compact .monster-mini-box { height: 80px; }
+    #combat-monsters.compact .monster-overlay { padding: 14px 3px 3px; }
+    #combat-monsters.compact .monster-mini-name { font-size: 0.5rem; }
+    #combat-monsters.compact .monster-mini-type { font-size: 0.38rem; }
+    #combat-monsters.compact .monster-rarity-badge { min-width: 10px; height: 10px; line-height: 10px; font-size: 0.4rem; }
+    #combat-monsters.compact .mini-track { width: 36px; height: 4px; }
+    #combat-monsters.compact .mini-hp .hp-bar-text { font-size: 0.38rem; min-width: 20px; }
     #combat-monster-box, #combat-player-box { padding: 10px 14px; }
     #combat-monster-name { font-size: 1.1rem; }
     .hp-bar-track { width: 120px; }

@@ -52,7 +52,9 @@
       "PowerShell($js = \\(Invoke-WebRequest -Uri 'http://localhost:3000/js/combat-system.js' -UseBasicParsing\\).Content; if\\($js -match 'isMultiplayerBossFight'\\){Write-Output 'isMultiplayerBossFight FOUND'}else{Write-Output 'isMultiplayerBossFight MISSING'}; if\\($js -match 'disableBossSkillButtons'\\){Write-Output 'disableBossSkillButtons FOUND'}else{Write-Output 'disableBossSkillButtons MISSING'}; if\\($js -match 'handleBossWhoseTurn'\\){Write-Output 'handleBossWhoseTurn FOUND'}else{Write-Output 'handleBossWhoseTurn MISSING'}; Write-Output \"Size: $\\($js.Length\\) bytes\")",
       "PowerShell($js = \\(Invoke-WebRequest -Uri 'http://localhost:3000/js/game-core.js' -UseBasicParsing\\).Content; if\\($js -match 'syncInvToGame'\\){Write-Output 'syncInvToGame FOUND'}else{Write-Output 'syncInvToGame MISSING'}; if\\($js -match 'getInventory'\\){Write-Output 'getInventory FOUND'}else{Write-Output 'getInventory MISSING'}; if\\($js -match 'multiplayer-waiting'\\){Write-Output 'multiplayer-waiting FOUND \\(BUG!\\)'}else{Write-Output 'multiplayer-waiting absent \\(correct\\)'}; Write-Output \"Size: $\\($js.Length\\) bytes\")",
       "Bash(Get-ChildItem *)",
-      "Bash(Sort-Object FullName)"
+      "Bash(Sort-Object FullName)",
+      "Bash(Select-Object -First 100)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
     ]
   }
 }

@@ -1566,7 +1566,7 @@ const Game = {
             var skills = [];
             skills.push({id:'basic',name:basicNames[char.id]||'Temel Vurus',type:'physical',scaleStat:'atk',scaleFactor:1.0,baseEffect:0,manaCost:0,cooldown:0,target:'enemy',description:'ATKx1.',rarity:'character',characterId:null});
             var chInv = char._inv || {};
-            var eqSkills = (chInv.equippedSkills && chInv.equippedSkills.length > 0) ? chInv.equippedSkills : (self.equippedSkills && self.equippedSkills.length > 0) ? self.equippedSkills : (char.characterSkills || []);
+            var eqSkills = (chInv.equippedSkills && chInv.equippedSkills.length > 0) ? chInv.equippedSkills : (char.characterSkills || []);
             eqSkills.forEach(function(sid) { var sk = getSkillById(sid); if (sk) skills.push(sk); });
             fightersData.push({
                 id: char.id,

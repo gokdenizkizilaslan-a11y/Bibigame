@@ -357,6 +357,10 @@ function handleBossAction(ws, msg) {
         ws.send(JSON.stringify({ type: 'error', message: 'Sira sende degil.' }));
         return;
     }
+    if (bf.fightersEndedTurn[player.characterId]) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Turu zaten bitirdin.' }));
+        return;
+    }
     bf.bossHp = msg.newBossHp;
     room.recordBossAction(player.characterId, msg.newFighterHp, msg.newFighterMana);
     room.broadcastAll({
