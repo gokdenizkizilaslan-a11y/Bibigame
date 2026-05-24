@@ -1882,7 +1882,8 @@ const CombatSystem = {
                 maxMana: Math.max(1, Math.floor(base.mag / 3)),
                 baseStats: base,
                 skills: skills,
-                passive: self.getPassive(ch)
+                passive: self.getPassive(ch),
+                isMyChar: ch.id === (Game.getPlayerCharacter ? Game.getPlayerCharacter().id : (Game.playerCharacterId || null))
             };
             self.partyUsedSkills[f.name] = [];
             self.partyCooldowns[f.name] = {};
@@ -1915,10 +1916,26 @@ const CombatSystem = {
             monsterCount = 10 + Math.floor(Math.random() * 11); // 10-20
             minLevel = 15; maxLevel = 30; // A-SS
         }
+        // Zindan büyüklüğüne göre minimum nadirlik
+        var minRarity = null;
+        var rarityOrder2 = ['D','C','B','A','S','SS'];
+        if (dz >= 7) minRarity = 'A';
+        else if (dz >= 6) minRarity = 'B';
+        else if (dz >= 5) minRarity = 'C';
+        var minRarityIdx = minRarity ? rarityOrder2.indexOf(minRarity) : -1;
         this.partyMonsters = [];
         for (var i = 0; i < monsterCount; i++) {
             var levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
             var m = getRandomMonster(Game.day + levelOffset);
+            // Minimum nadirlik filtresi
+            if (minRarityIdx >= 0) {
+                var retries = 0;
+                while (rarityOrder2.indexOf(m.rarity) < minRarityIdx && retries < 30) {
+                    levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+                    m = getRandomMonster(Game.day + levelOffset);
+                    retries++;
+                }
+            }
             m.currentHp = m.hp;
             m.maxHp = m.hp;
             if (partySize >= 2) m.hp = Math.round(m.hp * (1 + partySize * 0.15));
@@ -2058,8 +2075,16 @@ const CombatSystem = {
             this.partyUsedSkills[fighter.name] = [];
             this.state = 'PLAYER_TURN';
             this._renderPartyState();
-            this.renderPartySkills();
             this._highlightPartyActor('player', active.index);
+            // Multiplayer: yerel olmayan karakterleri AI oynat
+            if (!fighter.isMyChar) {
+                this.addLog('Sıra ' + fighter.name + '\'de. (AI)', '');
+                this.renderPartySkills();
+                var self2 = this;
+                setTimeout(function() { self2._partyAIAction(fighter, active.index); }, 600);
+                return;
+            }
+            this.renderPartySkills();
             this.addLog('Sıra ' + fighter.name + '\'de!', 'player');
         } else {
             var monster = this.partyMonsters[active.index];
@@ -2082,6 +2107,82 @@ const CombatSystem = {
             var el = document.getElementById('party-monster-box-' + i);
             if (el) el.style.borderColor = (type === 'monster' && i === idx) ? '#ff4444' : (RARITY_COLOR[m.rarity] || '#888');
         });
+    },
+
+    // Multiplayer zindan: AI diğer oyuncuları oynatır
+    _partyAIAction: function(fighter, fighterIdx) {
+        if (this.state !== 'PLAYER_TURN') return;
+        // Kullanilabilir skill'lerden rastgele seç (basic dahil)
+        var usable = fighter.skills.filter(function(s) {
+            if (fighter.mana < s.manaCost) return false;
+            var used = this.partyUsedSkills[fighter.name] || [];
+            if (used.indexOf(s.id) >= 0) return false;
+            var cds = this.partyCooldowns[fighter.name] || {};
+            if (s.cooldown > 0 && cds[s.id] && cds[s.id] > 0) return false;
+            return true;
+        }.bind(this));
+        var skill = usable.length > 0 ? usable[Math.floor(Math.random() * usable.length)] : fighter.skills[0];
+        // Skill efekti uygula
+        fighter.mana -= skill.manaCost;
+        var used = this.partyUsedSkills[fighter.name] || [];
+        used.push(skill.id);
+        this.partyUsedSkills[fighter.name] = used;
+        if (skill.cooldown > 0) {
+            var cds = this.partyCooldowns[fighter.name] || {};
+            cds[skill.id] = skill.cooldown;
+            this.partyCooldowns[fighter.name] = cds;
+        }
+        var stats = fighter.baseStats;
+        var dmg = 0, heal = 0;
+        var aliveMonsters = this.partyMonsters.filter(function(m) { return m.currentHp > 0; });
+        var targetMon = aliveMonsters[0];
+        var monEl = targetMon ? document.getElementById('party-monster-box-' + targetMon.index) : null;
+        if (skill.type === 'physical' || skill.type === 'magic') {
+            var statVal = stats[skill.scaleStat] || stats.atk;
+            dmg = Math.round(statVal * skill.scaleFactor) + (skill.baseEffect || 0);
+            var dmgType = skill.type === 'magic' ? 'magic' : 'physical';
+            if (skill.target === 'all_enemies') {
+                var self = this;
+                this.partyMonsters.forEach(function(m) {
+                    if (m.currentHp > 0) {
+                        var actual = self.reduceDamage(dmg, dmgType, m);
+                        m.currentHp = Math.max(0, m.currentHp - actual);
+                        self.addLog(m.name + ' -' + actual + ' HP', 'hit');
+                    }
+                });
+                this.addLog(fighter.name + ': ' + skill.name + '! (Alan)', 'hit');
+            } else if (targetMon) {
+                var actual = this.reduceDamage(dmg, dmgType, targetMon);
+                targetMon.currentHp = Math.max(0, targetMon.currentHp - actual);
+                this.addLog(fighter.name + ': ' + skill.name + '! -' + actual + ' HP', 'hit');
+                if (monEl) this.hitEffect(monEl, actual, false, dmgType);
+            }
+        } else if (skill.type === 'heal') {
+            heal = Math.round((stats.mag || 10) * skill.scaleFactor) + (skill.baseEffect || 0);
+            if (skill.target === 'all_allies') {
+                var self2 = this;
+                this.partyFighters.forEach(function(f) {
+                    if (f.hp > 0) { f.hp = Math.min(f.maxHp, f.hp + heal); }
+                });
+            } else {
+                fighter.hp = Math.min(fighter.maxHp, fighter.hp + heal);
+            }
+            this.addLog(fighter.name + ': ' + skill.name + '! +' + heal + ' HP', 'heal');
+        } else if (skill.type === 'buff') {
+            var bufStat = skill.scaleStat;
+            var bufVal = skill.baseEffect || Math.round(stats[bufStat] * 0.3);
+            this.activeBuffs['party_' + bufStat] = { value: bufVal, turns: Math.max(1, skill.cooldown - 1) };
+            this.addLog(fighter.name + ': ' + skill.name + '!', 'buff');
+        } else if (skill.type === 'debuff') {
+            this.activeDebuffs['party_debuff'] = { turns: 2 };
+            this.addLog(fighter.name + ': ' + skill.name + '!', 'debuff');
+        }
+        this._renderPartyState();
+        // AI tek hamle yapıp turu bitirir
+        this.addLog(fighter.name + ' turu bitirdi. (AI)', '');
+        var self3 = this;
+        this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
+        setTimeout(function() { self3._startPartyTurn(); }, 500);
     },
 
     _partyMonsterAttack: function(monster) {
@@ -2114,8 +2215,8 @@ const CombatSystem = {
         if (this.state !== 'PLAYER_TURN') return;
         var entry = this.partyTurnOrder[this.partyTurnIdx];
         var fighter = this.partyFighters[entry.index];
-        if (!fighter) return;
-        var skill = skillId === 'basic' ? fighter.skills[0] : getSkillById(skillId);
+        if (!fighter || !fighter.isMyChar) return;
+        var skill = skillId === 'basic' ? fighter.skills[0] : fighter.skills.find(function(s) { return s.id === skillId; });
         if (!skill) return;
 
         // Skill kullanılabilir mi?
@@ -2234,6 +2335,7 @@ const CombatSystem = {
         if (this.state !== 'PLAYER_TURN') return;
         var entry = this.partyTurnOrder[this.partyTurnIdx];
         var fighter = this.partyFighters[entry.index];
+        if (!fighter || !fighter.isMyChar) return;
         this.addLog(fighter.name + ' turu bitirdi.', '');
         this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
         var self = this;
@@ -2244,10 +2346,11 @@ const CombatSystem = {
         if (this.state !== 'PLAYER_TURN') return;
         var entry = this.partyTurnOrder[this.partyTurnIdx];
         var fighter = this.partyFighters[entry.index];
+        if (!fighter || !fighter.isMyChar) return;
 
         // Multiplayer: kacis mesajini diger oyunculara gonder
         if (Game.isMultiplayer && typeof Multiplayer !== 'undefined') {
-            Multiplayer.dungeonFlee(fighter.name + ' zindandan kacti!');
+            Multiplayer.send({ type: 'dungeon-flee', characterId: fighter.char.id, fleeMsg: fighter.name + ' zindandan kacti!' });
         }
 
         // Can yarıdan azsa: 1 kalp kaybeder
@@ -2293,6 +2396,11 @@ const CombatSystem = {
             return;
         }
         var fighter = this.partyFighters[entry.index];
+        // Multiplayer: sadece kendi karakterinin skill'lerini göster
+        if (!fighter.isMyChar) {
+            container.innerHTML = '<p style=\"color:var(--text-dim);text-align:center;font-size:0.75rem;\">🔄 ' + fighter.name + ' hamle yapıyor...</p>';
+            return;
+        }
         if (!this._partySkillsBuilt || this._partySkillsFor !== fighter.name) {
             this._partySkillsBuilt = true;
             this._partySkillsFor = fighter.name;
@@ -2410,7 +2518,7 @@ const CombatSystem = {
     _endPartyCombat: function(result) {
         this.state = result;
         var isVictory = result === 'VICTORY';
-        var totalGold = 0, totalFood = 0, totalWood = 0, totalMaden = 0;
+        var totalGold = 0, totalFood = 0, totalWood = 0, totalMaden = 0, totalXp = 0;
         if (isVictory) {
             var partyMult = this.partyFighters.length;
             this.partyMonsters.forEach(function(m) {
@@ -2420,17 +2528,22 @@ const CombatSystem = {
                 var rarityMaden = { D:[2,5], C:[3,8], B:[5,12], A:[8,18], S:[12,25], SS:[20,45] };
                 var range = rarityMaden[m.rarity] || [2,4];
                 totalMaden += range[0] + Math.floor(Math.random() * (range[1] - range[0] + 1));
+                totalXp += typeof rarityXp === 'function' ? rarityXp(m.rarity) : 150;
             });
+            // XP parti büyüklüğüne bölünür (daha çok oyuncu = daha az XP/kişi, ama daha çok canavar)
+            totalXp = Math.floor(totalXp / Math.max(1, partyMult / 2));
             if (totalGold > 0) ResourceManager.addGold(totalGold);
             if (totalFood > 0) ResourceManager.addFood(totalFood);
             if (totalWood > 0) ResourceManager.addWood(totalWood);
             if (totalMaden > 0) ResourceManager.addMaden(totalMaden);
+            if (totalXp > 0 && typeof Game.addXP === 'function') Game.addXP(totalXp);
         }
         var rewardText = [];
         if (totalGold > 0) rewardText.push(totalGold + ' altin');
         if (totalFood > 0) rewardText.push(totalFood + ' yemek');
         if (totalWood > 0) rewardText.push(totalWood + ' odun');
         if (totalMaden > 0) rewardText.push(totalMaden + ' maden');
+        if (totalXp > 0) rewardText.push('+' + totalXp + ' XP');
 
         this.hide();
         this.isPartyFight = false;

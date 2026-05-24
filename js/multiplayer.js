@@ -377,6 +377,23 @@ const Multiplayer = {
 
             case 'dungeon-flee':
                 Game.log(msg.fleeMsg, 'flee');
+                // Diğer oyuncunun karakterini kaçmış işaretle
+                if (CombatSystem.isPartyFight && CombatSystem.partyFighters) {
+                    var fleer = CombatSystem.partyFighters.find(function(f) {
+                        return f.char && f.char.id === msg.characterId;
+                    });
+                    if (fleer && !fleer.fled) {
+                        fleer.fled = true;
+                        fleer.hp = 0;
+                        CombatSystem._renderPartyState();
+                        // Eğer sıra kaçandaysa sonraki tura geç
+                        var entry = CombatSystem.partyTurnOrder[CombatSystem.partyTurnIdx];
+                        if (entry && entry.type === 'player' && CombatSystem.partyFighters[entry.index] === fleer) {
+                            CombatSystem.partyTurnIdx = (CombatSystem.partyTurnIdx + 1) % CombatSystem.partyTurnOrder.length;
+                            setTimeout(function() { CombatSystem._startPartyTurn(); }, 400);
+                        }
+                    }
+                }
                 break;
         }
     },
