@@ -2216,6 +2216,12 @@ const CombatSystem = {
         if (this.state !== 'PLAYER_TURN') return;
         var entry = this.partyTurnOrder[this.partyTurnIdx];
         var fighter = this.partyFighters[entry.index];
+
+        // Multiplayer: kacis mesajini diger oyunculara gonder
+        if (Game.isMultiplayer && typeof Multiplayer !== 'undefined') {
+            Multiplayer.dungeonFlee(fighter.name + ' zindandan kacti!');
+        }
+
         // Can yarıdan azsa: 1 kalp kaybeder
         if (fighter.hp < fighter.maxHp / 2) {
             fighter.char.hearts = Math.max(1, fighter.char.hearts - 1);

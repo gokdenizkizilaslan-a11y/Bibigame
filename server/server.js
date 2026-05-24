@@ -123,6 +123,18 @@ function handleMessage(ws, msg) {
         case 'leave':
             rooms.removePlayer(ws);
             break;
+        case 'dungeon-join':
+            handleDungeonJoin(ws, msg);
+            break;
+        case 'dungeon-leave':
+            handleDungeonLeave(ws, msg);
+            break;
+        case 'dungeon-start':
+            handleDungeonStart(ws, msg);
+            break;
+        case 'dungeon-flee':
+            handleDungeonFlee(ws, msg);
+            break;
         case 'chat':
             handleChat(ws, msg);
             break;
@@ -475,6 +487,73 @@ function executeServerBossTurn(room) {
             fighterIndex: 0
         });
     }
+}
+
+function handleDungeonJoin(ws, msg) {
+    var room = rooms.getRoom(ws.roomCode);
+    if (!room) return;
+    var player = room.getPlayer(ws);
+    if (!player) return;
+    var state = room.dungeonJoin(msg.dungeonSize, player.characterId);
+    room.broadcastAll({
+        type: 'dungeon-update',
+        lobbies: state
+    });
+}
+
+function handleDungeonLeave(ws, msg) {
+    var room = rooms.getRoom(ws.roomCode);
+    if (!room) return;
+    var player = room.getPlayer(ws);
+    if (!player) return;
+    var state = room.dungeonLeave(msg.dungeonSize, player.characterId);
+    room.broadcastAll({
+        type: 'dungeon-update',
+        lobbies: state
+    });
+}
+
+function handleDungeonStart(ws, msg) {
+    var room = rooms.getRoom(ws.roomCode);
+    if (!room) return;
+    var player = room.getPlayer(ws);
+    if (!player) return;
+    var memberIds = room.dungeonStart(msg.dungeonSize, player.characterId);
+    if (!memberIds) {
+        ws.send(JSON.stringify({ type: 'error', message: 'Zindan başlatılamadı.' }));
+        return;
+    }
+    // Karakter bilgilerini topla
+    var memberPlayers = [];
+    memberIds.forEach(function(id) {
+        var p = room.players.find(function(pp) { return pp.characterId === id; });
+        if (p) memberPlayers.push({ characterId: p.characterId, playerName: p.playerName });
+    });
+    room.broadcastAll({
+        type: 'dungeon-start-combat',
+        dungeonSize: msg.dungeonSize,
+        memberIds: memberIds,
+        memberPlayers: memberPlayers
+    });
+    // Lobileri temizle
+    var state = room.getDungeonLobbyState();
+    room.broadcastAll({
+        type: 'dungeon-update',
+        lobbies: state
+    });
+}
+
+function handleDungeonFlee(ws, msg) {
+    var room = rooms.getRoom(ws.roomCode);
+    if (!room) return;
+    var player = room.getPlayer(ws);
+    if (!player) return;
+    room.broadcastAll({
+        type: 'dungeon-flee',
+        characterId: player.characterId,
+        playerName: player.playerName,
+        fleeMsg: msg.fleeMsg || (player.playerName + ' zindandan kacti!')
+    });
 }
 
 function handleChat(ws, msg) {

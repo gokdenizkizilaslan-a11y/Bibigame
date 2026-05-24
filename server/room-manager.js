@@ -9,6 +9,7 @@ class Room {
         this.slotChoices = [];
         this.bossFight = null;
         this.bossVote = null;
+        this.dungeonLobbies = {}; // { '2': { leader: charId, members: [charId,...] }, ... }
         this.addPlayer(hostWs, hostCharId, hostName);
     }
 
@@ -234,6 +235,70 @@ class Room {
         this.bossFight = null;
         this.bossVote = null;
     }
+
+    // --- Zindan (Dungeon) Lobisi Sistemi ---
+
+    dungeonJoin(size, characterId) {
+        if (!this.dungeonLobbies) this.dungeonLobbies = {};
+        // Karakter baska bir zindandaysa oradan cikar
+        Object.keys(this.dungeonLobbies).forEach(function(key) {
+            var lobby = this.dungeonLobbies[key];
+            if (lobby && lobby.members) {
+                lobby.members = lobby.members.filter(function(id) { return id !== characterId; });
+                if (lobby.members.length === 0) {
+                    this.dungeonLobbies[key] = null;
+                } else if (lobby.leader === characterId) {
+                    lobby.leader = lobby.members[0];
+                }
+            }
+        }.bind(this));
+        // Yeni zindana katil
+        if (!this.dungeonLobbies[size]) {
+            this.dungeonLobbies[size] = { leader: null, members: [] };
+        }
+        var lobby = this.dungeonLobbies[size];
+        if (lobby.members.indexOf(characterId) < 0) {
+            lobby.members.push(characterId);
+        }
+        if (!lobby.leader) lobby.leader = characterId;
+        return this.getDungeonLobbyState();
+    },
+
+    dungeonLeave(size, characterId) {
+        if (!this.dungeonLobbies) this.dungeonLobbies = {};
+        var lobby = this.dungeonLobbies[size];
+        if (!lobby) return this.getDungeonLobbyState();
+        lobby.members = lobby.members.filter(function(id) { return id !== characterId; });
+        if (lobby.members.length === 0) {
+            this.dungeonLobbies[size] = null;
+        } else if (lobby.leader === characterId) {
+            lobby.leader = lobby.members[0];
+        }
+        return this.getDungeonLobbyState();
+    },
+
+    dungeonStart(size, characterId) {
+        if (!this.dungeonLobbies) return null;
+        var lobby = this.dungeonLobbies[size];
+        if (!lobby) return null;
+        if (lobby.leader !== characterId) return null;
+        if (lobby.members.length < 1) return null;
+        var members = [...lobby.members];
+        this.dungeonLobbies[size] = null;
+        return members;
+    },
+
+    getDungeonLobbyState() {
+        if (!this.dungeonLobbies) this.dungeonLobbies = {};
+        var state = {};
+        Object.keys(this.dungeonLobbies).forEach(function(key) {
+            var lobby = this.dungeonLobbies[key];
+            if (lobby && lobby.members && lobby.members.length > 0) {
+                state[key] = { leader: lobby.leader, members: [...lobby.members] };
+            }
+        }.bind(this));
+        return state;
+    }
 }
 
 class RoomManager {
@@ -315,6 +380,30 @@ class RoomManager {
         }
 
         room.removePlayer(ws);
+
+        // Zindan lobisinden de cikar
+        if (player && room.dungeonLobbies) {
+            var changed = false;
+            Object.keys(room.dungeonLobbies).forEach(function(key) {
+                var lobby = room.dungeonLobbies[key];
+                if (lobby && lobby.members && lobby.members.indexOf(player.characterId) >= 0) {
+                    lobby.members = lobby.members.filter(function(id) { return id !== player.characterId; });
+                    if (lobby.members.length === 0) {
+                        room.dungeonLobbies[key] = null;
+                    } else if (lobby.leader === player.characterId) {
+                        lobby.leader = lobby.members[0];
+                    }
+                    changed = true;
+                }
+            });
+            if (changed) {
+                var state = room.getDungeonLobbyState();
+                room.broadcastAll({
+                    type: 'dungeon-update',
+                    lobbies: state
+                });
+            }
+        }
 
         if (player) {
             room.broadcast({

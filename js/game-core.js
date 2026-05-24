@@ -135,6 +135,7 @@ const Game = {
         }
         this.ownedEquipment = [...charInv.ownedEquipment];
         this.ownedArtifacts = [];
+        this._dungeonLobbies = {};
         this.xp = 0;
         this.level = 1;
 
@@ -181,6 +182,7 @@ const Game = {
         this.defeatedBosses = saved.defeatedBosses || [];
         this.shelterBuilt = saved.shelterBuilt || false;
         this.craftingQueue = saved.craftingQueue || [];
+        this._dungeonLobbies = {};
 
         // Eksik state alanlarını başlat
         this.characters.forEach(c => {
@@ -902,6 +904,9 @@ const Game = {
         var myChar = activeChar || this.getPlayerCharacter();
         var myId = myChar ? myChar.id : null;
 
+        // Multiplayer'da sunucudan gelen lobi state'ini kullan
+        var lobbies = this._dungeonLobbies;
+
         var dungeons = [
             { size: 2, name: 'İkili Zindan', maxEnemy: 6, minEnemy: 3, level: 'D-C', color: '#6a9a5a', icon: '⚔️' },
             { size: 3, name: 'Üçlü Zindan', maxEnemy: 9, minEnemy: 5, level: 'D-B', color: '#5b8bd5', icon: '🛡️' },
@@ -972,6 +977,26 @@ const Game = {
         var leader = lobby ? lobby.leader : null;
         var iAmIn = members.indexOf(myId) >= 0;
 
+        // Multiplayer: sunucu uzerinden islem yap
+        if (this.isMultiplayer) {
+            if (iAmIn && leader === myId) {
+                // Lider ve zaten icerde → sunucuya baslat
+                document.getElementById('party-dungeon-modal').remove();
+                Multiplayer.dungeonStart(dgSize);
+                return;
+            }
+            if (iAmIn && leader !== myId) {
+                // Icinde ama lider degil → cik
+                Multiplayer.dungeonLeave(dgSize);
+                return;
+            }
+            // Disarida → katil (modal acik kalsin, sunucudan donus gelince _onDungeonUpdate yenileyecek)
+            Multiplayer.dungeonJoin(dgSize);
+            return;
+        }
+
+        // --- Singleplayer (eski davranis) ---
+
         // Lider ve zaten içerde → başlat
         if (iAmIn && leader === myId) {
             var alive = this.aliveCharacters;
@@ -1012,6 +1037,34 @@ const Game = {
 
         document.getElementById('party-dungeon-modal').remove();
         self.showPartyDungeonUI();
+    },
+
+    // Sunucudan gelen dungeon lobby guncellemesi
+    _onDungeonUpdate: function(lobbies) {
+        this._dungeonLobbies = lobbies || {};
+        // Eger zindan modali aciksa yenile
+        var modal = document.getElementById('party-dungeon-modal');
+        if (modal) {
+            modal.remove();
+            this.showPartyDungeonUI();
+        }
+    },
+
+    // Sunucudan gelen zindan baslatma komutu
+    _onDungeonStartCombat: function(msg) {
+        var self = this;
+        var modal = document.getElementById('party-dungeon-modal');
+        if (modal) modal.remove();
+        var alive = this.aliveCharacters;
+        var fighters = [];
+        (msg.memberIds || []).forEach(function(id) {
+            var ch = alive.find(function(c) { return c.id === id; });
+            if (ch) fighters.push(ch);
+        });
+        if (fighters.length >= 1) {
+            this._dungeonLobbies[msg.dungeonSize] = null;
+            CombatSystem.startPartyCombat(fighters, msg.dungeonSize);
+        }
     },
 
     startReviveRitual(characterId) {

@@ -153,6 +153,22 @@ const Multiplayer = {
         }
     },
 
+    dungeonJoin(size) {
+        this.send({ type: 'dungeon-join', dungeonSize: size });
+    },
+
+    dungeonLeave(size) {
+        this.send({ type: 'dungeon-leave', dungeonSize: size });
+    },
+
+    dungeonStart(size) {
+        this.send({ type: 'dungeon-start', dungeonSize: size });
+    },
+
+    dungeonFlee(fleeMsg) {
+        this.send({ type: 'dungeon-flee', fleeMsg: fleeMsg });
+    },
+
     handleMessage(msg) {
         switch (msg.type) {
             case 'room-created':
@@ -245,6 +261,7 @@ const Multiplayer = {
                     };
                 });
                 Game.defeatedBosses = [];
+                Game._dungeonLobbies = {};
                 Game.xp = 0;
                 Game.level = 1;
                 Game.shelterBuilt = false;
@@ -348,6 +365,18 @@ const Multiplayer = {
 
             case 'chat':
                 Chat.receive(msg.playerName, msg.characterId, msg.text, msg.time);
+                break;
+
+            case 'dungeon-update':
+                Game._onDungeonUpdate(msg.lobbies);
+                break;
+
+            case 'dungeon-start-combat':
+                Game._onDungeonStartCombat(msg);
+                break;
+
+            case 'dungeon-flee':
+                Game.log(msg.fleeMsg, 'flee');
                 break;
         }
     },
