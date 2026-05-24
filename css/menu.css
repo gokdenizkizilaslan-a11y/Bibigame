@@ -1,0 +1,290 @@
+/* ===== BIBIGAME - Menü Stilleri ===== */
+
+/* ===== Menü İçerik ===== */
+
+#menu-content {
+    text-align: center;
+    max-width: 550px;
+    width: 90%;
+    animation: slideUp 0.8s ease-out;
+}
+
+/* Logo */
+
+#logo-container {
+    margin-bottom: 50px;
+}
+
+#game-logo {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    color: var(--gold);
+    letter-spacing: 6px;
+    animation: glow-pulse 3s ease-in-out infinite;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+#tagline {
+    font-family: var(--font-body);
+    font-style: italic;
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    letter-spacing: 1px;
+}
+
+/* Menü Butonları */
+
+#menu-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.menu-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 18px 24px;
+    border: 2px solid var(--border-gold);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: var(--font-heading);
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-btn {
+    background: linear-gradient(180deg, rgba(58,46,31,0.8) 0%, rgba(30,24,20,0.9) 100%);
+    color: var(--gold-light);
+}
+.primary-btn:hover {
+    background: linear-gradient(180deg, rgba(80,60,35,0.9) 0%, rgba(40,30,20,0.95) 100%);
+    border-color: var(--gold);
+    box-shadow: 0 0 30px rgba(200,168,78,0.2);
+    transform: translateY(-2px);
+}
+.primary-btn:active {
+    transform: translateY(0);
+}
+
+.secondary-btn {
+    background: linear-gradient(180deg, rgba(30,24,20,0.6) 0%, rgba(20,16,12,0.8) 100%);
+    color: var(--text-light);
+    border-color: var(--border-dark);
+}
+.secondary-btn:hover {
+    border-color: var(--border-gold);
+    box-shadow: 0 0 20px rgba(200,168,78,0.1);
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+.btn-text {
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+}
+.btn-sub {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Küçük butonlar */
+
+#menu-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.small-btn {
+    background: none;
+    border: 1px solid var(--border-dark);
+    color: var(--text-dim);
+    padding: 8px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+.small-btn:hover {
+    border-color: var(--border-gold);
+    color: var(--text-bright);
+    background: rgba(200,168,78,0.05);
+}
+
+#version-text {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    opacity: 0.5;
+}
+
+/* ===== Nasıl Oynanır Stilleri ===== */
+
+.guide-section {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(106,84,40,0.2);
+}
+.guide-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+.guide-section h3 {
+    font-family: var(--font-heading);
+    color: var(--gold);
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+}
+.guide-section p {
+    color: var(--text-light);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ===== Ayarlar Stilleri ===== */
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(106,84,40,0.15);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-row span {
+    font-family: var(--font-heading);
+    color: var(--text-light);
+    font-size: 1rem;
+}
+.setting-row input[type="range"] {
+    width: 140px;
+    accent-color: var(--gold);
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 600px) {
+    #menu-content { max-width: 400px; }
+
+    #game-logo {
+        font-size: clamp(2rem, 10vw, 3.5rem);
+        letter-spacing: 3px;
+    }
+    #tagline { font-size: 0.85rem; }
+
+    #logo-container { margin-bottom: 30px; }
+
+    .menu-btn { padding: 14px 18px; }
+    .btn-icon { font-size: 1.4rem; }
+    .btn-text { font-size: 1.15rem; }
+    .btn-sub { font-size: 0.75rem; }
+
+    #menu-nav { gap: 10px; margin-bottom: 24px; }
+
+    #menu-footer { gap: 8px; }
+    #version-text { width: 100%; text-align: center; margin-top: 6px; }
+
+    .guide-section h3 { font-size: 0.95rem; }
+    .guide-section p { font-size: 0.83rem; }
+}
+
+@media (max-width: 400px) {
+    #menu-content { max-width: 320px; }
+
+    #game-logo { letter-spacing: 2px; }
+    .menu-btn { padding: 12px 14px; border-radius: 4px; }
+    .btn-text { font-size: 1rem; letter-spacing: 1px; }
+    .btn-sub { font-size: 0.7rem; }
+}
+
+/* ===== Lobi Karakter Kartları ===== */
+
+.lobby-char-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 4px;
+    margin-bottom: 12px;
+}
+
+.lobby-char-card {
+    background: linear-gradient(180deg, rgba(30,24,20,0.85) 0%, rgba(20,16,12,0.9) 100%);
+    border: 2px solid var(--border-dark);
+    border-radius: 6px;
+    padding: 8px 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.lobby-char-card:hover {
+    border-color: var(--border-gold);
+    transform: translateY(-2px);
+}
+
+.lobby-char-card.selected {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(90,60,20,0.6) 0%, rgba(40,30,20,0.6) 100%);
+    box-shadow: 0 0 12px rgba(200,168,78,0.2);
+}
+
+.lobby-char-portrait {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--border-gold);
+    overflow: hidden;
+    background: var(--bg-darkest);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lobby-char-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0; left: 0;
+}
+
+.lobby-char-initial {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    color: var(--text-dim);
+}
+
+.lobby-char-portrait img[src] + .lobby-char-initial {
+    display: none;
+}
+
+.lobby-char-name {
+    font-family: var(--font-heading);
+    color: var(--text-light);
+    font-size: 0.7rem;
+    line-height: 1.1;
+}
+
+.lobby-char-role {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-style: italic;
+}

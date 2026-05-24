@@ -1,0 +1,330 @@
+/* ===== BIBIGAME - Ana Stil (Dark Fantasy Tema) ===== */
+
+:root {
+    --bg-darkest: #181410;
+    --bg-dark: #221c16;
+    --bg-medium: #2c241c;
+    --parchment: #4a3e2f;
+    --parchment-light: #6a5a42;
+    --gold: #d4b456;
+    --gold-light: #e8d080;
+    --gold-dark: #9a7828;
+    --red: #9a2828;
+    --red-light: #d04848;
+    --red-dark: #6a1818;
+    --text-light: #e0d4bc;
+    --text-dim: #a09078;
+    --text-bright: #f5ecdc;
+    --border-dark: #3a2e22;
+    --border-gold: #7a6438;
+    --shadow: rgba(0,0,0,0.4);
+    --font-display: 'UnifrakturCook', cursive;
+    --font-heading: 'MedievalSharp', cursive;
+    --font-body: 'Crimson Text', Georgia, serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg-darkest);
+    font-family: var(--font-body);
+    color: var(--text-light);
+    font-size: 16px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#app-container {
+    position: relative;
+    width: 100%; height: 100vh;
+    z-index: 10;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+}
+.screen.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== Arka Plan Katmanları ===== */
+
+#bg-layer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+#particles-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.6;
+}
+
+#parchment-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+        radial-gradient(ellipse at 50% 20%, rgba(255,140,40,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at 50% 80%, rgba(180,80,30,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255,160,60,0.08) 0%, transparent 80%),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(80,50,30,0.04) 2px,
+            rgba(80,50,30,0.04) 4px
+        );
+}
+
+.candle {
+    position: absolute;
+    bottom: -20px;
+    width: 80px;
+    height: 200px;
+    z-index: 2;
+}
+#candle-left { left: 15%; }
+#candle-right { right: 15%; }
+
+.candle::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 30px;
+    background: #f5e6c8;
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 0 20px rgba(255,180,60,0.4);
+}
+.candle::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 20px;
+    background: radial-gradient(ellipse, #ffa040 0%, #ff6020 40%, transparent 70%);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 0.15s infinite alternate;
+    box-shadow: 0 0 40px rgba(255,120,20,0.5), 0 0 80px rgba(255,100,20,0.25);
+}
+
+@keyframes flicker {
+    0% { opacity: 0.85; transform: translateX(-50%) scale(1, 1); }
+    25% { opacity: 0.95; transform: translateX(-50%) scale(1.05, 0.9); }
+    50% { opacity: 0.8; transform: translateX(-50%) scale(0.95, 1.05); }
+    75% { opacity: 0.9; transform: translateX(-47%) scale(1.02, 0.95); }
+    100% { opacity: 0.88; transform: translateX(-53%) scale(1, 1.02); }
+}
+
+#fog-layer {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 40%;
+    background: linear-gradient(to top, rgba(60,30,15,0.45) 0%, rgba(80,40,20,0.18) 40%, transparent 100%);
+    animation: fog-drift 20s ease-in-out infinite;
+}
+
+@keyframes fog-drift {
+    0%, 100% { opacity: 0.6; transform: translateY(0); }
+    50% { opacity: 0.8; transform: translateY(-10px); }
+}
+
+/* ===== Zaman Dilimi Renk Overlay ===== */
+
+#tod-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    transition: background 1.5s ease-in-out;
+}
+
+#tod-overlay.tod-morning {
+    background: linear-gradient(
+        180deg,
+        rgba(255,180,60,0.12) 0%,
+        rgba(255,200,100,0.06) 30%,
+        rgba(200,140,60,0.04) 60%,
+        rgba(180,100,40,0.08) 100%
+    );
+}
+
+#tod-overlay.tod-noon {
+    background: linear-gradient(
+        180deg,
+        rgba(255,220,140,0.06) 0%,
+        rgba(255,240,180,0.04) 40%,
+        rgba(200,160,80,0.03) 70%,
+        rgba(140,100,50,0.06) 100%
+    );
+}
+
+#tod-overlay.tod-evening {
+    background: linear-gradient(
+        180deg,
+        rgba(255,100,30,0.16) 0%,
+        rgba(255,140,50,0.10) 25%,
+        rgba(200,80,60,0.08) 50%,
+        rgba(120,40,60,0.12) 80%,
+        rgba(60,20,40,0.18) 100%
+    );
+}
+
+/* ===== Modal Sistemi ===== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(5,3,2,0.85);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-box {
+    background: linear-gradient(135deg, var(--bg-medium) 0%, var(--bg-dark) 100%);
+    border: 2px solid var(--border-gold);
+    border-radius: 8px;
+    max-width: 650px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 60px rgba(200,168,78,0.15), 0 10px 40px var(--shadow);
+    padding: 0;
+}
+
+.settings-box { max-width: 400px; }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-gold);
+    background: rgba(0,0,0,0.3);
+}
+.modal-header h2 {
+    font-family: var(--font-heading);
+    color: var(--gold);
+    font-size: 1.4em;
+}
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.8em;
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+}
+.modal-close:hover { color: var(--text-bright); }
+
+.modal-body { padding: 24px; }
+
+/* ===== Scrollbar ===== */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-darkest); }
+::-webkit-scrollbar-thumb {
+    background: var(--parchment);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--parchment-light); }
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+@keyframes glow-pulse {
+    0%, 100% { text-shadow: 0 0 10px rgba(200,168,78,0.3), 0 0 20px rgba(200,168,78,0.1); }
+    50% { text-shadow: 0 0 20px rgba(200,168,78,0.6), 0 0 40px rgba(200,168,78,0.3), 0 0 60px rgba(200,168,78,0.15); }
+}
+
+/* ===== Genel Responsive ===== */
+
+@media (max-width: 600px) {
+    html, body { font-size: 14px; }
+
+    .screen.active {
+        padding: 20px 12px;
+    }
+
+    .modal-box {
+        width: 94%;
+        max-width: 94%;
+        max-height: 85vh;
+        border-radius: 6px;
+    }
+    .modal-header {
+        padding: 14px 16px;
+    }
+    .modal-header h2 { font-size: 1.1rem; }
+    .modal-body { padding: 16px; }
+    .modal-close { font-size: 1.5rem; }
+
+    .candle { width: 40px; height: 120px; }
+    .candle::before { width: 4px; height: 20px; top: 14px; }
+    .candle::after { width: 10px; height: 14px; top: 5px; }
+    #candle-left { left: 8%; }
+    #candle-right { right: 8%; }
+
+    .small-btn {
+        padding: 8px 16px;
+        font-size: 0.82rem;
+        min-height: 40px;
+    }
+
+    button, .choice-card, .char-list-item, .lobby-tab {
+        cursor: pointer;
+        -webkit-tap-highlight-color: rgba(200,168,78,0.15);
+        touch-action: manipulation;
+    }
+
+    .menu-btn { min-height: 60px; }
+}
+
+@media (max-width: 400px) {
+    html, body { font-size: 13px; }
+
+    .modal-box {
+        width: 97%;
+        max-width: 97%;
+        max-height: 90vh;
+    }
+
+    .candle { width: 30px; height: 90px; }
+    #candle-left { left: 4%; }
+    #candle-right { right: 4%; }
+
+    #particles-canvas { opacity: 0.3; }
+}

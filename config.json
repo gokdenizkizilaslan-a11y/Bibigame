@@ -1,0 +1,351 @@
+{
+  "_aciklama": "BIBIGAME YAPILANDIRMA DOSYASI - Resim ve ses ayarlarini buradan degistirebilirsin.",
+
+  "background": {
+    "_aciklama": "Arka plan gorseli. assets/backgrounds/ klasorune at, yolunu buraya yaz.",
+    "image": "assets/backgrounds/default.jpg",
+    "opacity": 0.3,
+    "blur": 2
+  },
+
+  "timeOfDayBackgrounds": {
+    "_aciklama": "Sabah/Ogle/Aksam icin farkli arka plan gorselleri (bos birakilirsa ustteki default kullanilir).",
+    "morning": {
+      "image": "",
+      "opacity": 0.3,
+      "blur": 2
+    },
+    "noon": {
+      "image": "",
+      "opacity": 0.35,
+      "blur": 2
+    },
+    "evening": {
+      "image": "",
+      "opacity": 0.3,
+      "blur": 2
+    }
+  },
+
+  "actionIcons": {
+    "_aciklama": "Aksiyon butonlari icin ikon ve resim. icon: emoji, image: resim dosyasi (bos birakilirsa emoji kullanilir).",
+    "zindan": { "icon": "⚔️", "image": "" },
+    "hizli-zindan": { "icon": "🛡️", "image": "" },
+    "kader": { "icon": "🌙", "image": "" },
+    "dinlen": { "icon": "🏕️", "image": "" },
+    "demirci": { "icon": "🔨", "image": "" },
+    "diriltme": { "icon": "✨", "image": "" },
+    "pazar": { "icon": "🛒", "image": "" },
+    "insaa": { "icon": "🏚️", "image": "" },
+    "uyu": { "icon": "🌙", "image": "" }
+  },
+
+  "characterPortraits": {
+    "_aciklama": "Karakter portreleri. assets/characters/ klasorune at, yolunu buraya yaz. Sona , koymayi unutma!",
+    "irem": "assets/characters/irem.png",
+    "gokdeniz": "assets/characters/gokdeniz.png",
+    "noyan": "assets/characters/noyan.png",
+    "begul": "assets/characters/begul.png",
+    "bedrican": "assets/characters/bedrican.png",
+    "cansin": "assets/characters/cansin.png",
+    "gunda": "assets/characters/gunda.png",
+    "dominic": "assets/characters/dominic.png",
+    "bulent": "assets/characters/bulent.png",
+    "emir": "assets/characters/emir.png",
+    "emin": "assets/characters/emin.png",
+    "emir": "assets/characters/emir.png",
+    "bora": "assets/characters/bora.png",
+    "zeynep": "assets/characters/zeynep.png",
+    "furkan": "assets/characters/furkan.png"
+  },
+
+  "cardImages": {
+    "_aciklama": "Kart resimleri (opsiyonel). assets/cards/ klasorune kart_id.png olarak at.",
+    "enabled": false,
+    "path": "assets/cards/"
+  },
+
+  "portraitFrame": {
+    "_aciklama": "Karakter portre cercevesi: borderColor, bgColor, borderWidth(px), borderRadius(px).",
+    "borderColor": "#c8a84e",
+    "bgColor": "#0a0705",
+    "borderWidth": 2,
+    "borderRadius": 8
+  },
+
+  "characterStats": {
+    "_aciklama": "Tum karakter combat istatistikleri. hp, atk, def, mr, mag, spd, crit. Buradan degistirebilirsin.",
+    "irem": {
+      "hp": 560,
+      "atk": 7,
+      "def": 13,
+      "mr": 14,
+      "mag": 25,
+      "spd": 9,
+      "crit": 5
+    },
+    "gokdeniz": {
+      "hp": 510,
+      "atk": 31,
+      "def": 12,
+      "mr": 8,
+      "mag": 2,
+      "spd": 10,
+      "crit": 25
+    },
+    "noyan": {
+      "hp": 490,
+      "atk": 8,
+      "def": 10,
+      "mr": 12,
+      "mag": 24,
+      "spd": 14,
+      "crit": 7
+    },
+    "begul": {
+      "hp": 460,
+      "atk": 6,
+      "def": 8,
+      "mr": 14,
+      "mag": 28,
+      "spd": 12,
+      "crit": 6
+    },
+    "bedrican": {
+      "hp": 780,
+      "atk": 11,
+      "def": 18,
+      "mr": 14,
+      "mag": 2,
+      "spd": 6,
+      "crit": 3
+    },
+    "cansin": {
+      "hp": 590,
+      "atk": 21,
+      "def": 15,
+      "mr": 15,
+      "mag": 9,
+      "spd": 13,
+      "crit": 6
+    },
+    "gunda": {
+      "hp": 445,
+      "atk": 4,
+      "def": 9,
+      "mr": 13,
+      "mag": 39,
+      "spd": 11,
+      "crit": 5
+    },
+    "dominic": {
+      "hp": 580,
+      "atk": 19,
+      "def": 16,
+      "mr": 16,
+      "mag": 15,
+      "spd": 15,
+      "crit": 14
+    },
+    "bulent": {
+      "hp": 620,
+      "atk": 12,
+      "def": 5,
+      "mr": 4,
+      "mag": 8,
+      "spd": 11,
+      "crit": 5
+    },
+    "emin": {
+      "hp": 470,
+      "atk": 6,
+      "def": 14,
+      "mr": 16,
+      "mag": 28,
+      "spd": 10,
+      "crit": 40
+    },
+    "zeynep": {
+      "hp": 580,
+      "atk": 16,
+      "def": 16,
+      "mr": 14,
+      "mag": 4,
+      "spd": 7,
+      "crit": 4
+    },
+    "emir": {
+      "hp": 540,
+      "atk": 17,
+      "def": 15,
+      "mr": 9,
+      "mag": 6,
+      "spd": 11,
+      "crit": 20
+    },
+    "bora": {
+      "hp": 620,
+      "atk": 7,
+      "def": 9,
+      "mr": 13,
+      "mag": 19,
+      "spd": 15,
+      "crit": 15
+    },
+    "furkan": {
+      "hp": 470,
+      "atk": 19,
+      "def": 10,
+      "mr": 8,
+      "mag": 5,
+      "spd": 18,
+      "crit": 15
+    }
+  },
+
+  "music": {
+    "_aciklama": "Muzik sistemi. fadeTime: gecis suresi (ms). Her kategori icin mode: sequential (sirayla) veya random (rastgele).",
+    "volume": 30,
+    "fadeTime": 2000,
+    "categories": {
+      "menu": {
+        "mode": "sequential",
+        "tracks": [
+          { "name": "Menu 1", "file": "assets/audio/music/menu1.mp3" },
+          { "name": "Menu 2", "file": "assets/audio/music/menu2.mp3" },
+          { "name": "Menu 3", "file": "assets/audio/music/menu3.mp3" }
+        ]
+      },
+      "game": {
+        "mode": "sequential",
+        "tracks": [
+          { "name": "Kasaba 1", "file": "assets/audio/music/menu1.mp3" },
+          { "name": "Kasaba 2", "file": "assets/audio/music/menu2.mp3" }
+        ]
+      },
+      "battle": {
+        "mode": "random",
+        "tracks": [
+          { "name": "Savas 1", "file": "assets/audio/music/battle1.mp3" },
+          { "name": "Savas 2", "file": "assets/audio/music/battle2.mp3" }
+        ]
+      },
+      "boss": {
+        "mode": "random",
+        "tracks": [
+          { "name": "Boss 1", "file": "assets/audio/music/boss1.mp3" }
+        ]
+      }
+    }
+  },
+
+  "audio": {
+    "musicVolume": 50,
+    "sfxVolume": 70
+  },
+  "rarityIcons": {
+    "_aciklama": "Kart nadirlik ikonlari. Istedigin emoji veya karakteri koy.",
+    "common": "📜",
+    "rare": "💎",
+    "epic": "✨",
+    "legendary": "👑"
+
+
+  },
+
+  "cardBackgrounds": {
+    "_aciklama": "Kart nadirligine gore arka plan gorselleri. assets/ klasorune atip yolunu yaz.",
+    "common": "",
+    "rare": "",
+    "epic": "",
+    "legendary": ""
+  },
+  "rarityIcons": {
+    "common": "assets/cards/common.png",
+    "rare": "assets/cards/rare.png",
+    "epic": "assets/cards/epic.png",
+    "legendary": "assets/cards/legendary.png"
+  },
+
+  "bossPortraits": {
+    "_aciklama": "Boss portreleri. assets/bosses/ klasorune at.",
+    "tayyip_kiliclaroglu": "assets/bosses/tayyip.png",
+    "eyup_b": "assets/bosses/eyup.png",
+    "michael_jackson": "assets/bosses/michael.png",
+    "sutas_ayran": "assets/bosses/sutas.png",
+    "mari_daridir": "assets/bosses/mari.png",
+    "zeytin": "assets/bosses/zeytin.png"
+  },
+
+  "monsterPortraits": {
+    "_aciklama": "Canavar portreleri. assets/monsters/ klasorune PNG olarak at, yolunu buraya yaz. Canavar id'si ile eslesmeli.",
+    "kurt": "assets/monsters/kurt.png",
+    "zehirli-orumcek": "assets/monsters/zehirli-orumcek.png",
+    "kemirgen-surusu": "assets/monsters/kemirgen-surusu.png",
+    "et-yiyen-bitki": "assets/monsters/et-yiyen-bitki.png",
+    "golge-yaratik": "assets/monsters/golge-yaratik.png",
+    "iskelet-savasci": "assets/monsters/iskelet-savasci.png",
+    "curumus-dev": "assets/monsters/curumus-dev.png",
+    "harpi": "assets/monsters/harpi.png",
+    "alev-iblisi": "assets/monsters/alev-iblisi.png",
+    "karabasan": "assets/monsters/karabasan.png",
+    "tas-golem": "assets/monsters/tas-golem.png",
+    "buyucu-kultist": "assets/monsters/buyucu-kultist.png",
+    "ejderha-yavrusu": "assets/monsters/ejderha-yavrusu.png",
+    "olum-sovalyesi": "assets/monsters/olum-sovalyesi.png",
+    "kadim-hortlak": "assets/monsters/kadim-hortlak.png",
+    "zombi": "assets/monsters/zombi.png",
+    "dev-orumcek": "assets/monsters/dev-orumcek.png",
+    "zincirli-ruh": "assets/monsters/zincirli-ruh.png",
+    "su-iblisi": "assets/monsters/su-iblisi.png",
+    "zirhli-trol": "assets/monsters/zirhli-trol.png",
+    "gargoyle": "assets/monsters/gargoyle.png",
+    "donmus-dev": "assets/monsters/donmus-dev.png",
+    "kaos-sovalyesi": "assets/monsters/kaos-sovalyesi.png",
+    "zehirli-solucan": "assets/monsters/zehirli-solucan.png",
+    "hayalet": "assets/monsters/hayalet.png",
+    "dev-sivrisinek": "assets/monsters/dev-sivrisinek.png",
+    "balcik-adam": "assets/monsters/balcik-adam.png",
+    "tas-adam": "assets/monsters/tas-adam.png",
+    "ates-yaratik": "assets/monsters/ates-yaratik.png",
+    "yildirim-kus": "assets/monsters/yildirim-kus.png",
+    "kan-golem": "assets/monsters/kan-golem.png",
+    "kultur-buyucusu": "assets/monsters/kultur-buyucusu.png",
+    "ruh-hirsizi": "assets/monsters/ruh-hirsizi.png",
+    "demir-zirhli": "assets/monsters/demir-zirhli.png",
+    "ates-ejderi": "assets/monsters/ates-ejderi.png",
+    "olaganustu-varlik": "assets/monsters/olaganustu-varlik.png",
+    "karanlik-lordu": "assets/monsters/karanlik-lordu.png",
+    "antik-iblis": "assets/monsters/antik-iblis.png",
+    "buz-anasi": "assets/monsters/buz-anasi.png",
+    "yildiz-canavari": "assets/monsters/yildiz-canavari.png",
+    "olum-melegi": "assets/monsters/olum-melegi.png"
+  },
+
+  "equipmentDrops": {
+    "_aciklama": "Ekipman dusme oranlari (yuzde).",
+    "normal": {
+      "_aciklama": "Normal dusmanlardan dusme oranlari",
+      "common": 35,
+      "uncommon": 30,
+      "rare": 25,
+      "mythic": 8,
+      "legendary": 2
+    },
+    "boss": {
+      "_aciklama": "Bosslardan dusme oranlari (common dusmez)",
+      "uncommon": 10,
+      "rare": 35,
+      "mythic": 35,
+      "legendary": 15,
+      "ilahi": 5
+    }
+  },
+
+  "timer": {
+    "seconds": 90,
+    "autoAdvance": true
+  },
+
+  "language": "tr"
+}

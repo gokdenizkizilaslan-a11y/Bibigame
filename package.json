@@ -1,0 +1,13 @@
+{
+  "name": "bibigame",
+  "version": "0.1.0",
+  "description": "Karanlık Fantezi Co-op Hayatta Kalma Oyunu",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

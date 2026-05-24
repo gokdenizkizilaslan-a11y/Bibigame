@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIBIGAME - Karanlık Fantezi Hayatta Kalma</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚔️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=UnifrakturCook:wght@700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/character-select.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <!-- Arka Plan Animasyonları -->
+    <div id="bg-layer">
+        <canvas id="particles-canvas"></canvas>
+        <div id="tod-overlay" class="tod-morning"></div>
+        <div id="parchment-overlay"></div>
+        <div id="candle-left" class="candle"></div>
+        <div id="candle-right" class="candle"></div>
+        <div id="fog-layer"></div>
+    </div>
+
+    <div id="app-container">
+
+        <!-- ========== ANA MENÜ ========== -->
+        <section id="main-menu" class="screen active">
+            <div id="menu-content">
+                <div id="logo-container">
+                    <h1 id="game-logo">BIBIGAME</h1>
+                    <p id="tagline">Karanlığın içinden yükselen alev...</p>
+                </div>
+
+                <nav id="menu-nav">
+                    <button id="btn-singleplayer" class="menu-btn primary-btn">
+                        <span class="btn-icon">&#9876;</span>
+                        <span class="btn-text">Tek Oyuncu</span>
+                        <span class="btn-sub">Tek başına hayatta kal</span>
+                    </button>
+
+                    <button id="btn-multiplayer" class="menu-btn primary-btn">
+                        <span class="btn-icon">&#9733;</span>
+                        <span class="btn-text">Çok Oyunculu</span>
+                        <span class="btn-sub">2-7 oyuncu ile oyna</span>
+                    </button>
+
+                    <button id="btn-continue" class="menu-btn secondary-btn" style="display:none;">
+                        <span class="btn-icon">&#8635;</span>
+                        <span class="btn-text">Devam Et</span>
+                        <span class="btn-sub">Kayıtlı oyundan devam et</span>
+                    </button>
+                </nav>
+
+                <div id="menu-footer">
+                    <button id="btn-how-to-play" class="small-btn">Nasıl Oynanır?</button>
+                    <button id="btn-settings" class="small-btn">&#9881; Ayarlar</button>
+                    <span id="version-text">v0.1.0</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== NASIL OYNANIR MODAL ========== -->
+        <div id="how-to-play-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h2>Nasıl Oynanır?</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="guide-section">
+                        <h3>&#127775; Oyunun Amacı</h3>
+                        <p>Her gün karşına çıkan olaylara karşı seçimler yap, kaynaklarını yönet ve takımını hayatta tut.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>&#9889; Enerji &amp; Aksiyon Sistemi</h3>
+                        <p>Her gün <strong>10 enerji</strong> ile başlarsın. Üç aksiyon seçeneğin var:</p>
+                        <p><strong>&#9876; Savaş (3 enerji):</strong> Canavarlara karşı sıra tabanlı dövüş. Zar at, hasar ver, ödül kazan!</p>
+                        <p><strong>&#127769; Kader (2 enerji):</strong> Kader kartı çek, seçimini yap. Günde en fazla 2 kere.</p>
+                        <p><strong>&#127968; Dinlen (0 enerji):</strong> Turu bitir, 1 kalp kazan.</p>
+                        <p>Her <strong>2 aksiyonda</strong> bir zaman dilimi değişir (Sabah &rarr; Öğle &rarr; Akşam).</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>&#9760; Dövüş Sistemi</h3>
+                        <p>Savaş aksiyonunda bir canavar ile karşılaşırsın. <strong>d20 zar</strong> sistemi ile saldırı ve savunma yapılır. Canavarı yenince altın, yemek ve odun kazanırsın. İstersen <strong>kaçabilirsin</strong> ama canın yanar!</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>&#10084;&#65039; Kalp Sistemi</h3>
+                        <p>Her karakter <strong>4 kalple</strong> başlar. Kalbin sıfırlanırsa ölürsün. <strong>İrem</strong> karakteri, yeterli kaynak varsa ölen karakterleri ritüel ile diriltebilir.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>&#128230; Kaynaklar</h3>
+                        <p><strong>&#127860; Yemek:</strong> Günlük tüketim ve iyileşme için.<br>
+                        <strong>&#128084; Odun:</strong> Barınak, ateş ve eşya yapımı için.<br>
+                        <strong>&#128176; Altın:</strong> Ticaret, ritüeller ve özel eşyalar için.</p>
+                    </div>
+                    <div class="guide-section">
+                        <h3>&#128101; Karakter Sinerjileri</h3>
+                        <p>Bazı karakterler birlikteyken daha güçlüdür. Mesela <strong>İrem & Gökdeniz</strong> veya <strong>Noyan & Begül</strong> birbirini tamamlar.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== AYARLAR MODAL ========== -->
+        <div id="settings-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box settings-box">
+                <div class="modal-header">
+                    <h2>&#9881; Ayarlar</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-row">
+                        <span>Müzik Sesi</span>
+                        <input type="range" id="music-volume" min="0" max="100" value="50">
+                    </div>
+                    <div class="setting-row">
+                        <span>Ses Efektleri</span>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="70">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== KARAKTER SEÇİM EKRANI ========== -->
+        <section id="character-select" class="screen" style="display:none;">
+            <div id="char-select-container">
+                <h2 id="char-select-title">Karakterini Seç</h2>
+                <div id="char-select-layout">
+                    <div id="char-list">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                    <div id="char-detail">
+                        <div id="char-portrait-frame">
+                            <img id="char-portrait" src="" alt="Karakter Portresi">
+                            <div id="char-portrait-placeholder">?</div>
+                        </div>
+                        <div id="char-info">
+                            <h3 id="char-name"></h3>
+                            <p id="char-title-display"></p>
+                            <p id="char-desc"></p>
+                            <div id="char-synergy"></div>
+                            <div id="char-skills">
+                                <h4>Combat İstatistikleri</h4>
+                                <p id="char-combat-stats" class="char-stats-line"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="player-name-area">
+                    <label for="player-name-input">Karakter Adın:</label>
+                    <input type="text" id="player-name-input" placeholder="Adını gir..." maxlength="20">
+                </div>
+                <div id="char-select-actions">
+                    <button id="btn-back-to-menu" class="small-btn">Geri Dön</button>
+                    <button id="btn-start-game" class="menu-btn primary-btn">Oyuna Başla</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== MULTIPLAYER LOBİ EKRANI ========== -->
+        <section id="multiplayer-lobby" class="screen" style="display:none;">
+            <div id="lobby-container">
+                <h2>Çok Oyunculu Lobi</h2>
+
+                <div id="connection-help">
+                    <p>Diğer oyuncular aynı WiFi'ye bağlanıp tarayıcıdan şu adresi açsın:</p>
+                    <code id="join-url-display"></code>
+                </div>
+
+                <div id="lobby-tabs">
+                    <button class="lobby-tab active" data-tab="create">Oda Kur</button>
+                    <button class="lobby-tab" data-tab="join">Odaya Katıl</button>
+                </div>
+                <div id="lobby-create" class="lobby-panel">
+                    <div class="lobby-section">
+                        <label>Oda Adı:</label>
+                        <input type="text" id="room-name-input" placeholder="Oda adı..." maxlength="20">
+                    </div>
+                    <div class="lobby-section">
+                        <label>Oyuncu Adın:</label>
+                        <input type="text" id="lobby-player-name-create" placeholder="Adın..." maxlength="15">
+                    </div>
+                    <label style="font-family:var(--font-heading);color:var(--gold);font-size:0.85rem;">Karakterin:</label>
+                    <div id="lobby-char-grid-create" class="lobby-char-grid"></div>
+                    <button id="btn-create-room" class="menu-btn primary-btn">Oda Kur</button>
+                    <div id="created-room-info" style="display:none;">
+                        <p>Oda Kodu: <strong id="room-code-display"></strong></p>
+                        <p id="players-in-room"></p>
+                        <div id="lobby-player-list"></div>
+                        <p class="lobby-hint">Diğer oyuncular "Odaya Katıl" sekmesinden bu kodu girmeli.</p>
+                        <button id="btn-start-multiplayer" class="menu-btn primary-btn">Oyunu Başlat</button>
+                    </div>
+                </div>
+                <div id="lobby-join" class="lobby-panel" style="display:none;">
+                    <div class="lobby-section">
+                        <label>Oda Kodu:</label>
+                        <input type="text" id="room-code-input" placeholder="6 haneli kod..." maxlength="6">
+                    </div>
+                    <div class="lobby-section">
+                        <label>Oyuncu Adın:</label>
+                        <input type="text" id="lobby-player-name-join" placeholder="Adın..." maxlength="15">
+                    </div>
+                    <label style="font-family:var(--font-heading);color:var(--gold);font-size:0.85rem;">Karakterin:</label>
+                    <div id="lobby-char-grid-join" class="lobby-char-grid"></div>
+                    <button id="btn-join-room" class="menu-btn primary-btn">Odaya Katıl</button>
+                    <div id="joined-room-info" style="display:none;">
+                        <p id="joined-players"></p>
+                    </div>
+                </div>
+                <button id="btn-lobby-back" class="small-btn">Geri Dön</button>
+            </div>
+        </section>
+
+        <!-- ========== OYUN EKRANI ========== -->
+        <section id="game-screen" class="screen" style="display:none;">
+            <!-- ÜST HUD -->
+            <div id="game-hud">
+                <div id="hud-left">
+                    <span id="hud-day">Gün: 1</span>
+                    <span id="hud-time">Sabah</span>
+                    <span id="hud-energy">⚡ 10/10</span>
+                    <span id="hud-fate">🌙 0/2</span>
+                    <span id="hud-level">⭐ Lv.1</span>
+                </div>
+                <div id="hud-center">
+                    <div id="timer-ring">
+                        <svg width="48" height="48" viewBox="0 0 48 48">
+                            <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+                            <circle id="timer-progress" cx="24" cy="24" r="20" fill="none" stroke="#c8a84e" stroke-width="3" stroke-dasharray="125.6" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+                        </svg>
+                        <span id="timer-text">60</span>
+                    </div>
+                    <span id="hud-actions">🎯 0/2</span>
+                </div>
+                <div id="hud-right">
+                    <button onclick="Game.showMap()" style="background:rgba(200,168,78,0.2);border:1px solid var(--border-gold);color:var(--gold);padding:3px 10px;border-radius:4px;cursor:pointer;font-family:var(--font-heading);font-size:0.75rem;">🗺️ Harita</button>
+                    <span id="hud-food">&#127860; <span id="food-count">10</span></span>
+                    <span id="hud-wood">&#128084; <span id="wood-count">5</span></span>
+                    <span id="hud-gold">&#128176; <span id="gold-count">3</span></span>
+                    <span id="hud-maden">&#11093; <span id="maden-count">0</span></span>
+                    <select id="music-select" onchange="MusicPlayer.play(this.value)" style="background:rgba(0,0,0,0.5);border:1px solid rgba(106,84,40,0.3);color:var(--text-light);font-size:0.65rem;padding:2px 4px;border-radius:3px;max-width:80px;">
+                        <option value="">🔇</option>
+                    </select>
+                    <input type="range" id="music-volume" min="0" max="100" value="30" oninput="MusicPlayer.setVolume(this.value)" style="width:50px;height:4px;cursor:pointer;" title="Ses">
+                </div>
+            </div>
+
+            <!-- 3 PANEL ANA ALAN -->
+            <div id="game-main">
+                <!-- SOL PANEL: Benim Karakterim + Başarım -->
+                <div id="game-left-panel">
+                    <div id="my-character-card">
+                        <div id="my-portrait-frame">
+                            <img id="my-portrait" src="" alt="">
+                            <div id="my-portrait-placeholder">?</div>
+                        </div>
+                        <div id="my-char-name"></div>
+                        <div id="my-char-hearts"></div>
+                        <div id="my-char-stats" class="char-stats-panel"></div>
+                    </div>
+                    <button id="btn-achievements" class="side-panel-btn" onclick="Game.showAchievements()">&#127942; Başarımlar</button>
+                    <button id="btn-inventory" class="side-panel-btn" onclick="Game.showInventory()">🎒 Envanter</button>
+                </div>
+
+                <!-- ORTA: Kart Alanı -->
+                <div id="game-center-panel">
+                    <div id="card-area">
+                        <div id="scenario-box">
+                            <img id="scenario-image" src="" alt="" style="display:none;">
+                            <div id="scenario-icon">&#128220;</div>
+                            <span id="scenario-rarity"></span>
+                            <p id="scenario-text">Senaryo yükleniyor...</p>
+                        </div>
+                        <div id="choices-container">
+                            <!-- 4 seçenek kartı / aksiyon butonları -->
+                        </div>
+                    </div>
+                    <!-- Sıra Tabanlı Dövüş Alanı -->
+                    <div id="combat-area" style="display:none;">
+                        <div id="combat-monsters"></div>
+                        <div id="combat-player-box">
+                            <div class="hp-bar-container">
+                                <span class="hp-bar-label">Sen</span>
+                                <div class="hp-bar-track"><div class="hp-bar-fill player-hp" id="player-hp-fill"></div></div>
+                                <span class="hp-bar-text" id="player-hp-text"></span>
+                            </div>
+                            <div id="combat-player-stats" class="combat-stats"></div>
+                            <div class="hp-bar-container mana-bar">
+                                <span class="hp-bar-label">Mana</span>
+                                <div class="hp-bar-track mana-track"><div class="hp-bar-fill mana-fill" id="mana-fill"></div></div>
+                                <span class="hp-bar-text" id="mana-text">0/0</span>
+                            </div>
+                        </div>
+                        <div id="combat-skills"></div>
+                        <div id="combat-log"><div id="combat-log-entries"></div></div>
+                        <div id="combat-actions">
+                            <button id="btn-eat-food" class="combat-btn" style="font-size:0.65rem;padding:6px 10px;background:rgba(100,180,80,0.2);border-color:#6a9a5a;color:#8cba7c;width:auto;">🍗 Yemek Ye</button>
+                            <button id="btn-end-turn" class="combat-btn" style="font-size:0.75rem;padding:8px 16px;background:rgba(100,140,200,0.3);border-color:#5b8bd5;color:#8ebbff;width:auto;">⏩ Sırayı Bitir</button>
+                            <button id="btn-flee" class="combat-btn flee-btn" style="font-size:0.7rem;padding:6px 14px;width:auto;">&#128168; KAÇ</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SAĞ PANEL: Diğer Oyuncular + Harita -->
+                <div id="game-right-panel">
+                    <div id="other-players-list">
+                        <!-- JS ile doldurulacak -->
+                    </div>
+                    <button id="btn-map" class="side-panel-btn" onclick="Game.showMap()" style="position:relative;z-index:10;">&#128506; Harita</button>
+                </div>
+            </div>
+
+            <!-- ALT: Günlük -->
+            <div id="game-log">
+                <h4>Olay Günlüğü</h4>
+                <div id="log-entries"></div>
+            </div>
+
+            <!-- Sonuç Overlay -->
+            <div id="result-overlay" style="display:none;">
+                <div id="result-box">
+                    <h2 id="result-title"></h2>
+                    <p id="result-text"></p>
+                    <button id="btn-result-continue" class="menu-btn primary-btn">Devam</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== BAŞARIM MODAL ========== -->
+        <div id="achievements-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h2>&#127942; Başarımlar & Seçim Geçmişi</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="achievements-content">
+                        <p style="color:var(--text-dim)">Henüz seçim yapılmadı.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ENVANTER MODAL ========== -->
+        <div id="inventory-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box inv-box">
+                <div class="modal-header">
+                    <h2>🎒 Envanter</h2>
+                    <span id="inv-equipped-count" style="color:var(--gold);font-size:0.9rem;">0/5</span>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="equipment-slots"></div>
+                    <div id="skill-equip-slots" style="display:flex;gap:6px;margin-bottom:10px;justify-content:center;"></div>
+                    <div id="inventory-grid"></div>
+                    <p style="text-align:center;color:var(--text-dim);font-size:0.7rem;margin-top:8px;">Tıkla: kuşan/çıkar | 5 skill slotu | Savaşta Q-E-F-G-R tuşları</p>
+                    <p style="text-align:center;color:var(--text-dim);font-size:0.65rem;">Her karakter 5 skill ile başlar. Savaşlardan yeni skill kazanabilirsin.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== HARİTA MODAL ========== -->
+        <div id="map-modal" class="modal-overlay" style="display:none;">
+            <div class="modal-box map-box">
+                <div class="modal-header">
+                    <h2>&#128506; Keşif Haritası</h2>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="map-grid"></div>
+                    <div id="map-boss-info" style="display:none;text-align:center;margin-top:12px;">
+                        <h3 id="map-boss-name" style="color:var(--red-light);"></h3>
+                        <p id="map-boss-title" style="color:var(--text-dim);font-size:0.8rem;"></p>
+                        <button id="btn-start-boss" class="menu-btn primary-btn" style="margin-top:8px;display:inline-flex;">⚔️ Savaşa Git</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== HİKAYE GİRİŞ OVERLAY ========== -->
+        <div id="story-intro-overlay" style="display:none;">
+            <div id="story-intro-bg">
+                <div id="story-particles"></div>
+            </div>
+            <div id="story-intro-box">
+                <div id="story-intro-title">Karanlık Çökerken...</div>
+                <div id="story-intro-text"></div>
+                <button id="btn-story-continue" class="menu-btn primary-btn">Devam</button>
+            </div>
+        </div>
+
+        <!-- ========== OYUN SONU EKRANI ========== -->
+        <section id="game-over-screen" class="screen" style="display:none;">
+            <div id="game-over-content">
+                <h2 id="game-over-title"></h2>
+                <p id="game-over-stats"></p>
+                <button id="btn-back-to-menu-final" class="menu-btn primary-btn">Ana Menüye Dön</button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Mobil Müzik Butonu -->
+    <button id="music-float-btn" class="music-float-btn" title="Ses">🎵</button>
+    <div id="music-float-popup" class="music-float-popup">
+        <label>🎵 Müzik</label>
+        <input type="range" id="music-float-slider" min="0" max="100" value="30">
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/character-data.js"></script>
+    <script src="js/card-data.js"></script>
+    <script src="js/save-system.js"></script>
+    <script src="js/monster-data.js"></script>
+    <script src="js/skill-data.js"></script>
+    <script src="js/equipment-data.js"></script>
+    <script src="js/artifact-data.js"></script>
+    <script src="js/boss-data.js"></script>
+    <script src="js/story-data.js"></script>
+    <script src="js/combat-system.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/character-select.js"></script>
+    <script src="js/game-core.js"></script>
+    <script src="js/card-system.js"></script>
+    <script src="js/resource-manager.js"></script>
+    <script src="js/event-system.js"></script>
+    <script src="js/multiplayer.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
