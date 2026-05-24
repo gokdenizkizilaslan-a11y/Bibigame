@@ -262,7 +262,7 @@ class Room {
         }
         if (!lobby.leader) lobby.leader = characterId;
         return this.getDungeonLobbyState();
-    },
+    }
 
     dungeonLeave(size, characterId) {
         if (!this.dungeonLobbies) this.dungeonLobbies = {};
@@ -275,7 +275,7 @@ class Room {
             lobby.leader = lobby.members[0];
         }
         return this.getDungeonLobbyState();
-    },
+    }
 
     dungeonStart(size, characterId) {
         if (!this.dungeonLobbies) return null;
@@ -286,7 +286,7 @@ class Room {
         var members = [...lobby.members];
         this.dungeonLobbies[size] = null;
         return members;
-    },
+    }
 
     getDungeonLobbyState() {
         if (!this.dungeonLobbies) this.dungeonLobbies = {};
