@@ -82,11 +82,11 @@ S('zey_04','Kraliyet Darbesi','physical','atk',3.0,0,2,3,'enemy','ATK×3 hasar.'
 S('zey_05','Son Kale','buff','def',0.0,100,3,5,'self','HP<%30 ise 2 tur dokunulmazlık.','character','zeynep');
 
 // --- Emir (Avcı) ---
-S('emi_01','Babanne Bastonu','physical','atk',2.5,0,0,2,'enemy','ATK×2.5, babaannenin bastonunu fırlatır.','character','emin');
-S('emi_02','Babanne Ruhu','magic','mag',5.5,0,2,1,'all_enemies','MAG×4.5, babaannenin ruhu herkese saldırır ve hatrı sayılır bir hasar verir.','character','emin');
-S('emi_03','Avcı Oku','physical','atk',2.0,0,0,1,'enemy','ATK×2 menzilli hasar.','character','emin');
-S('emi_04','Kapan','physical','atk',3.0,0,0,1,'enemy','ATK×3 tuzak hasarı.','character','emin');
-S('emi_05','Tuvalet Korkusu','buff','atk',0.0,20,0,3,'self','babannesi onu heyecanlandırarak güclendirir','character','emin');
+S('emi_01','Babanne Bastonu','physical','atk',2.5,0,0,2,'enemy','ATK×2.5, babaannenin bastonunu fırlatır.','character','emir');
+S('emi_02','Babanne Ruhu','magic','mag',5.5,0,2,1,'all_enemies','MAG×4.5, babaannenin ruhu herkese saldırır ve hatrı sayılır bir hasar verir.','character','emir');
+S('emi_03','Avcı Oku','physical','atk',2.0,0,0,1,'enemy','ATK×2 menzilli hasar.','character','emir');
+S('emi_04','Kapan','physical','atk',3.0,0,0,1,'enemy','ATK×3 tuzak hasarı.','character','emir');
+S('emi_05','Tuvalet Korkusu','buff','atk',0.0,20,0,3,'self','babannesi onu heyecanlandırarak güclendirir','character','emir');
 
 // --- Bora (Müzisyen) ---
 S('bor_01','Melodi','magic','mag',2.0,0,2,1,'enemy','MAG×2 büyü hasarı.','character','bora');

@@ -2661,6 +2661,16 @@ const CombatSystem = {
             this._endPartyCombat('DEFEAT');
             return;
         }
+        // Multiplayer: ben kactiysam zindandan cik, kalanlar devam etsin
+        if (this._isMultiplayerParty) {
+            this.addLog('Zindandan kaçtın!', 'flee');
+            var self2 = this;
+            setTimeout(function() {
+                self2.hide();
+                if (typeof Game.showActionButtons === 'function') Game.showActionButtons();
+            }, 300);
+            return;
+        }
         // Sonraki tura geç
         this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
         var self = this;

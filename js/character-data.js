@@ -298,7 +298,7 @@ const CHARACTERS = [
         canRevive: false,
         portrait: "assets/characters/emir.png",
         combatStats: { hp: 540, atk: 17, def: 15, spd: 11, mag: 6, mr: 9, crit: 5 },
-        characterSkills: ['emr_01','emr_02','emr_03','emr_04','emr_05'],
+        characterSkills: ['emi_01','emi_02','emi_03','emi_04','emi_05'],
         passive: { name: "İnfaz", description: "Canı %10un altına düşen boss olmayan düşmanları anında öldürür.", effect: "execute" }
     },
     {

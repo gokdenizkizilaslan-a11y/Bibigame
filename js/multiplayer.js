@@ -392,7 +392,15 @@ const Multiplayer = {
 
             case 'dungeon-flee':
                 Game.log(msg.fleeMsg, 'flee');
-                // Diğer oyuncunun karakterini kaçmış işaretle
+                // Ben kactiysam zindandan cik, normal oyuna don
+                if (msg.characterId === this.playerCharacterId) {
+                    if (CombatSystem.isPartyFight && CombatSystem.state !== 'VICTORY' && CombatSystem.state !== 'DEFEAT') {
+                        CombatSystem.hide();
+                        Game.showActionButtons();
+                    }
+                    break;
+                }
+                // Diger oyuncu kactiysa partide kaçmis isaretle
                 if (CombatSystem.isPartyFight && CombatSystem.partyFighters) {
                     var fleer = CombatSystem.partyFighters.find(function(f) {
                         return f.char && f.char.id === msg.characterId;

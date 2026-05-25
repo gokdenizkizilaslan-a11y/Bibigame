@@ -1057,6 +1057,14 @@ const Game = {
         var self = this;
         var modal = document.getElementById('party-dungeon-modal');
         if (modal) modal.remove();
+        // Sadece benim karakterim gruptaysa zindan savasina gir
+        var myChar = this.getPlayerCharacter();
+        var myId = myChar ? myChar.id : null;
+        var iAmIn = myId && (msg.memberIds || []).indexOf(myId) >= 0;
+        if (!iAmIn) {
+            this.log('Bir ekip zindana girdi!', 'event');
+            return;
+        }
         var alive = this.aliveCharacters;
         var fighters = [];
         (msg.memberIds || []).forEach(function(id) {

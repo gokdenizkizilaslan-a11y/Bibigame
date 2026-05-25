@@ -556,12 +556,13 @@ function handleDungeonFlee(ws, msg) {
     if (!room) return;
     var player = room.getPlayer(ws);
     if (!player) return;
-    room.broadcastAll({
+    // Kacan oyuncu haric herkese bildir (kacan zaten lokal isledi)
+    room.broadcast({
         type: 'dungeon-flee',
         characterId: player.characterId,
         playerName: player.playerName,
         fleeMsg: msg.fleeMsg || (player.playerName + ' zindandan kacti!')
-    });
+    }, ws);
 }
 
 function handlePartyAction(ws, msg) {
