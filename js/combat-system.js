@@ -2361,9 +2361,7 @@ const CombatSystem = {
         if (fighterEl) this.hitEffect(fighterEl, reduced, roll === 20);
         this._renderPartyState();
 
-        if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
-
-        // Multiplayer: canavar aksiyonunu broadcast et (host'tan)
+        // ÖNCE broadcast yap (yenilgi kontrolünden önce!)
         if (this._isMultiplayerParty && this._isHost) {
             var monsterIdx = this.partyMonsters.indexOf(monster);
             Multiplayer.partyAction({
@@ -2380,6 +2378,9 @@ const CombatSystem = {
                 })
             });
         }
+
+        // SONRA yenilgi kontrolü
+        if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
 
         // Sonraki tura geç
         var self = this;
@@ -2589,6 +2590,9 @@ const CombatSystem = {
             this.addLog(msg.actorName + ' ' + (this.partyFighters[msg.targetFighterIndex]?.name || '') + '\'e saldirdi! -' + msg.damage + ' HP', 'monster-hit');
             this._renderPartyState();
             this.renderPartySkills();
+            // Zafer/yenilgi kontrolü
+            if (this.partyMonsters.every(function(m) { return m.currentHp <= 0; })) { this._endPartyCombat('VICTORY'); return; }
+            if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
             // Turu ilerlet
             if (this._isMultiplayerParty && !this._isHost) {
                 this._multiplayerWaitTurn = false;
@@ -2625,6 +2629,10 @@ const CombatSystem = {
 
         this._renderPartyState();
         this.renderPartySkills();
+
+        // Zafer/yenilgi kontrolü (broadcast sonrası direkt kontrol)
+        if (this.partyMonsters.every(function(m) { return m.currentHp <= 0; })) { this._endPartyCombat('VICTORY'); return; }
+        if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
 
         // Turu ilerlet (sadece tur gerçekten bittiğinde)
         // skill broadcast'leri tek tek gelir, her birinde tur atlanmamalı
