@@ -2050,16 +2050,16 @@ const CombatSystem = {
     _buildPartyTurnOrder: function() {
         this.partyTurnOrder = [];
         var self = this;
-        // Tüm karakterleri ekle
-        this.partyFighters.forEach(function(f, i) {
-            self.partyTurnOrder.push({ type: 'player', index: i, spd: f.baseStats.spd || 10 });
-        });
-        // Tüm canavarları ekle
-        this.partyMonsters.forEach(function(m, i) {
-            self.partyTurnOrder.push({ type: 'monster', index: i, spd: m.speed || 8 });
-        });
-        // SPD'ye göre sırala (yüksekten düşüğe)
-        this.partyTurnOrder.sort(function(a, b) { return b.spd - a.spd; });
+        // Önce oyuncuları SPD'ye göre sırala (yüksekten düşüğe)
+        var players = this.partyFighters.map(function(f, i) {
+            return { type: 'player', index: i, spd: f.baseStats.spd || 10 };
+        }).sort(function(a, b) { return b.spd - a.spd; });
+        // Sonra canavarları SPD'ye göre sırala
+        var monsters = this.partyMonsters.map(function(m, i) {
+            return { type: 'monster', index: i, spd: m.speed || 8 };
+        }).sort(function(a, b) { return b.spd - a.spd; });
+        // Önce tüm oyuncular, sonra tüm canavarlar
+        this.partyTurnOrder = players.concat(monsters);
         this.partyTurnIdx = 0;
     },
 
@@ -2520,6 +2520,18 @@ const CombatSystem = {
         });
         if (!canContinue) {
             self4.addLog(fighter.name + ': Kullanilabilir skill kalmadi.', 'miss');
+            // Multiplayer: skill kalmadığı için turun bittiğini bildir
+            if (self4._isMultiplayerParty) {
+                var hpData = self4.partyMonsters.filter(function(m) { return m.currentHp >= 0; }).map(function(m) {
+                    return { index: m.index, currentHp: m.currentHp, maxHp: m.maxHp };
+                });
+                Multiplayer.partyAction({
+                    actionType: 'end-turn',
+                    skillName: 'Sirasini bitirdi',
+                    fighterHpAfter: { hp: fighter.hp, maxHp: fighter.maxHp, mana: fighter.mana, maxMana: fighter.maxMana },
+                    monsterHpChanges: hpData
+                });
+            }
             // Sonraki tura geç
             self4.partyTurnIdx = (self4.partyTurnIdx + 1) % self4.partyTurnOrder.length;
             setTimeout(function() { self4._startPartyTurn(); }, 500);
@@ -2614,12 +2626,16 @@ const CombatSystem = {
         this._renderPartyState();
         this.renderPartySkills();
 
-        // Turu ilerlet (sadece broadcast alan istemcide, gonderici zaten ilerletti)
+        // Turu ilerlet (sadece tur gerçekten bittiğinde)
+        // skill broadcast'leri tek tek gelir, her birinde tur atlanmamalı
         if (this._isMultiplayerParty && !this._isHost) {
-            this._multiplayerWaitTurn = false;
-            this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
-            var self2 = this;
-            setTimeout(function() { self2._startPartyTurn(); }, 400);
+            var shouldAdvance = (msg.actionType === 'end-turn') || msg.aiControlled;
+            if (shouldAdvance) {
+                this._multiplayerWaitTurn = false;
+                this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
+                var self2 = this;
+                setTimeout(function() { self2._startPartyTurn(); }, 400);
+            }
         }
     },
 
