@@ -999,6 +999,8 @@ const CombatSystem = {
         this.playerHp = 0; this.playerMaxHp = 0; this.playerMana = 0; this.playerMaxMana = 0;
         this._partySkillsBuilt = false; this._partySkillBtns = {};
         this._isMultiplayerParty = false;
+        this._isHost = false;
+        this._multiplayerWaitTurn = false;
         MusicPlayer.playCategory('game');
     },
 
@@ -1934,6 +1936,8 @@ const CombatSystem = {
         this.partyUsedSkills = {};
         this.partyCooldowns = {};
         this._isMultiplayerParty = Game.isMultiplayer && Multiplayer && Multiplayer.connected;
+        this._isHost = this._isMultiplayerParty ? (Multiplayer.isHost === true) : false;
+        this._multiplayerWaitTurn = false;
 
         // Karakterleri hazırla
         var self = this;
@@ -2124,8 +2128,15 @@ const CombatSystem = {
     },
 
     _startPartyTurn: function() {
+        if (this._multiplayerWaitTurn) {
+            // Bekleme modundayiz, broadcast gelene kadar ilerleme
+            return;
+        }
+        // Zafer/yenilgi kontrolu (tum canavarlar olmus veya tum oyuncular olmus)
+        if (this.partyMonsters.every(function(m) { return m.currentHp <= 0; })) { this._endPartyCombat('VICTORY'); return; }
+        if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
+
         // Tur indeksini ilerlet, ölüleri atla
-        var startIdx = this.partyTurnIdx;
         var found = false;
         var loopCount = 0;
         while (loopCount < this.partyTurnOrder.length * 2) {
@@ -2157,23 +2168,60 @@ const CombatSystem = {
             this.state = 'PLAYER_TURN';
             this._renderPartyState();
             this._highlightPartyActor('player', active.index);
-            // Multiplayer: yerel olmayan karakterleri AI oynat
-            if (!fighter.isMyChar) {
+            // Benim karakterim mi?
+            if (fighter.isMyChar) {
+                this.renderPartySkills();
+                this.addLog('Sıra ' + fighter.name + '\'de!', 'player');
+            } else if (this._isMultiplayerParty) {
+                // Multiplayer: baska oyuncunun karakteri
+                if (this._isHost) {
+                    // HOST: AI ile oynat, sonucu broadcast et
+                    this.addLog('Sıra ' + fighter.name + '\'de. (AI)', '');
+                    this.renderPartySkills();
+                    var self2 = this;
+                    setTimeout(function() { self2._partyAIAction(fighter, active.index); }, 600);
+                } else {
+                    // HOST DEGIL: bekle, broadcast gelince tur ilerleyecek
+                    this.state = 'WAITING';
+                    this._multiplayerWaitTurn = true;
+                    this.addLog(fighter.name + ' düşünüyor...', '');
+                }
+                return;
+            } else {
+                // Singleplayer AI
                 this.addLog('Sıra ' + fighter.name + '\'de. (AI)', '');
                 this.renderPartySkills();
                 var self2 = this;
                 setTimeout(function() { self2._partyAIAction(fighter, active.index); }, 600);
                 return;
             }
-            this.renderPartySkills();
-            this.addLog('Sıra ' + fighter.name + '\'de!', 'player');
         } else {
+            // Canavar sirasi
             var monster = this.partyMonsters[active.index];
-            this.state = 'MONSTER_TURN';
-            this._highlightPartyActor('monster', active.index);
-            this.addLog(monster.name + ' saldırıyor...', 'monster');
-            var self = this;
-            setTimeout(function() { self._partyMonsterAttack(monster); }, 700);
+            if (this._isMultiplayerParty) {
+                if (this._isHost) {
+                    // HOST: canavar AI'sini hesapla, broadcast et
+                    this.state = 'MONSTER_TURN';
+                    this._highlightPartyActor('monster', active.index);
+                    this.addLog(monster.name + ' saldırıyor...', 'monster');
+                    var self = this;
+                    setTimeout(function() { self._partyMonsterAttack(monster); }, 700);
+                } else {
+                    // HOST DEGIL: bekle
+                    this.state = 'WAITING';
+                    this._multiplayerWaitTurn = true;
+                    this._highlightPartyActor('monster', active.index);
+                    this.addLog(monster.name + ' saldıracak...', '');
+                }
+                return;
+            } else {
+                // Singleplayer
+                this.state = 'MONSTER_TURN';
+                this._highlightPartyActor('monster', active.index);
+                this.addLog(monster.name + ' saldırıyor...', 'monster');
+                var self = this;
+                setTimeout(function() { self._partyMonsterAttack(monster); }, 700);
+            }
         }
     },
 
@@ -2259,8 +2307,35 @@ const CombatSystem = {
             this.addLog(fighter.name + ': ' + skill.name + '!', 'debuff');
         }
         this._renderPartyState();
-        // AI tek hamle yapıp turu bitirir
+        // AI tek hamle yapip turu bitirir
         this.addLog(fighter.name + ' turu bitirdi. (AI)', '');
+
+        // Multiplayer: host AI aksiyonunu broadcast et
+        if (this._isMultiplayerParty && this._isHost) {
+            var monsterHpChanges = this.partyMonsters.filter(function(m) { return m.currentHp >= 0; }).map(function(m) {
+                return { index: m.index, currentHp: m.currentHp, maxHp: m.maxHp };
+            });
+            Multiplayer.partyAction({
+                actionType: 'skill',
+                actorName: fighter.name,
+                actorId: fighter.char && fighter.char.id ? fighter.char.id : undefined,
+                skillId: skill.id,
+                skillName: skill.name,
+                skillType: skill.type,
+                damage: dmg,
+                dmgType: skill.type === 'magic' ? 'magic' : 'physical',
+                targetMonsterIdx: targetMon ? targetMon.index : -1,
+                monsterHpChanges: monsterHpChanges,
+                fighterHpAfter: { hp: fighter.hp, maxHp: fighter.maxHp, mana: fighter.mana, maxMana: fighter.maxMana },
+                isCrit: false,
+                aiControlled: true
+            });
+        }
+
+        // Zafer/yenilgi kontrolu
+        if (this.partyMonsters.every(function(m) { return m.currentHp <= 0; })) { this._endPartyCombat('VICTORY'); return; }
+        if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
+
         var self3 = this;
         this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
         setTimeout(function() { self3._startPartyTurn(); }, 500);
@@ -2273,6 +2348,7 @@ const CombatSystem = {
         var aliveFighters = this.partyFighters.filter(function(f) { return f.hp > 0 && !f.fled; });
         if (aliveFighters.length === 0) { this._endPartyCombat('DEFEAT'); return; }
         var target = aliveFighters[Math.floor(Math.random() * aliveFighters.length)];
+        var targetIdx = this.partyFighters.indexOf(target);
 
         this.addLog(monster.name + ' ' + target.name + '\'e saldırdı! (zAR:' + roll + '+' + monster.attackBonus + '=' + dmg + ')', 'monster');
         var stats = target.baseStats;
@@ -2280,11 +2356,29 @@ const CombatSystem = {
         target.hp = Math.max(0, target.hp - reduced);
         this.addLog(target.name + ' -' + reduced + ' HP (' + target.hp + '/' + target.maxHp + ')', 'monster-hit');
 
-        var fighterEl = document.getElementById('party-fighter-' + this.partyFighters.indexOf(target));
+        var fighterEl = document.getElementById('party-fighter-' + targetIdx);
         if (fighterEl) this.hitEffect(fighterEl, reduced, roll === 20);
         this._renderPartyState();
 
         if (this.partyFighters.every(function(f) { return f.hp <= 0 || f.fled; })) { this._endPartyCombat('DEFEAT'); return; }
+
+        // Multiplayer: canavar aksiyonunu broadcast et (host'tan)
+        if (this._isMultiplayerParty && this._isHost) {
+            var monsterIdx = this.partyMonsters.indexOf(monster);
+            Multiplayer.partyAction({
+                actionType: 'monster-attack',
+                actorName: monster.name,
+                skillName: monster.name + ' saldirisi',
+                monsterIndex: monsterIdx,
+                targetFighterIndex: targetIdx,
+                damage: reduced,
+                dmgType: monster.dmgType || 'physical',
+                fighterHpAfter: { hp: target.hp, maxHp: target.maxHp, mana: target.mana, maxMana: target.maxMana },
+                monsterHpChanges: this.partyMonsters.filter(function(m) { return m.currentHp >= 0; }).map(function(m) {
+                    return { index: m.index, currentHp: m.currentHp, maxHp: m.maxHp };
+                })
+            });
+        }
 
         // Sonraki tura geç
         var self = this;
@@ -2450,7 +2544,7 @@ const CombatSystem = {
         setTimeout(function() { self._startPartyTurn(); }, 300);
     },
 
-    // Multiplayer parti zindani: baska oyuncunun aksiyonunu uygula
+    // Multiplayer parti zindani: baska oyuncunun aksiyonunu uygula ve turu ilerlet
     receivePartyAction: function(msg) {
         if (!this.isPartyFight) return;
 
@@ -2466,14 +2560,40 @@ const CombatSystem = {
             });
         }
 
-        // Fighter HP/mana guncelle
-        if (msg.fighterHpAfter) {
+        if (msg.actionType === 'monster-attack') {
+            // Canavar saldirisi: targetFighterIndex ile fighter'i bul
+            if (msg.targetFighterIndex !== undefined && msg.fighterHpAfter) {
+                var target = this.partyFighters[msg.targetFighterIndex];
+                if (target) {
+                    target.hp = msg.fighterHpAfter.hp;
+                    target.maxHp = msg.fighterHpAfter.maxHp;
+                    if (msg.fighterHpAfter.mana !== undefined) target.mana = msg.fighterHpAfter.mana;
+                    // Gorsel efekt
+                    var fel = document.getElementById('party-fighter-' + msg.targetFighterIndex);
+                    if (fel) this.hitEffect(fel, msg.damage || 0, false);
+                }
+            }
+            this.addLog(msg.actorName + ' ' + (this.partyFighters[msg.targetFighterIndex]?.name || '') + '\'e saldirdi! -' + msg.damage + ' HP', 'monster-hit');
+            this._renderPartyState();
+            this.renderPartySkills();
+            // Turu ilerlet
+            if (this._isMultiplayerParty && !this._isHost) {
+                this._multiplayerWaitTurn = false;
+                this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
+                var self2 = this;
+                setTimeout(function() { self2._startPartyTurn(); }, 400);
+            }
+            return;
+        }
+
+        // Fighter HP/mana guncelle (oyuncu aksiyonu icin)
+        if (msg.fighterHpAfter && msg.actorName) {
             var actor = this.partyFighters.find(function(f) { return f.name === msg.actorName; });
             if (actor) {
                 actor.hp = msg.fighterHpAfter.hp;
                 actor.maxHp = msg.fighterHpAfter.maxHp;
-                actor.mana = msg.fighterHpAfter.mana;
-                actor.maxMana = msg.fighterHpAfter.maxMana;
+                actor.mana = msg.fighterHpAfter.mana !== undefined ? msg.fighterHpAfter.mana : actor.mana;
+                actor.maxMana = msg.fighterHpAfter.maxMana !== undefined ? msg.fighterHpAfter.maxMana : actor.maxMana;
             }
         }
 
@@ -2492,6 +2612,14 @@ const CombatSystem = {
 
         this._renderPartyState();
         this.renderPartySkills();
+
+        // Turu ilerlet (sadece broadcast alan istemcide, gonderici zaten ilerletti)
+        if (this._isMultiplayerParty && !this._isHost) {
+            this._multiplayerWaitTurn = false;
+            this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
+            var self2 = this;
+            setTimeout(function() { self2._startPartyTurn(); }, 400);
+        }
     },
 
     partyFlee: function() {

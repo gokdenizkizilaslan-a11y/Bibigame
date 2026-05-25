@@ -569,11 +569,14 @@ function handlePartyAction(ws, msg) {
     if (!room) return;
     var player = room.getPlayer(ws);
     if (!player) return;
-    // Parti aksiyonunu tum uyelere broadcast et (gonderici dahil, state senkronizasyonu icin)
-    room.broadcastAll({
+    // Parti aksiyonunu diger oyunculara broadcast et (gonderici HARIC, o zaten lokal uyguladi)
+    // actorName/actorId mesajda varsa kullan (AI/monster actions), yoksa gondericinin kimligini kullan
+    var actorName = msg.actorName || player.playerName;
+    var actorId = msg.actorId || player.characterId;
+    room.broadcast({
         type: 'party-action-bc',
-        actorId: player.characterId,
-        actorName: player.playerName,
+        actorId: actorId,
+        actorName: actorName,
         skillId: msg.skillId,
         skillName: msg.skillName,
         skillType: msg.skillType,
@@ -584,8 +587,10 @@ function handlePartyAction(ws, msg) {
         fighterHpAfter: msg.fighterHpAfter,
         fighterManaAfter: msg.fighterManaAfter,
         isCrit: msg.isCrit || false,
-        actionType: msg.actionType || 'skill' // 'skill', 'end-turn', 'flee'
-    });
+        actionType: msg.actionType || 'skill', // 'skill', 'end-turn', 'flee', 'monster-attack'
+        monsterIndex: msg.monsterIndex,
+        targetFighterIndex: msg.targetFighterIndex
+    }, ws); // ws = gonderici haric
 }
 
 function handleChat(ws, msg) {

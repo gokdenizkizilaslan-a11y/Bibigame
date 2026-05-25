@@ -172,6 +172,8 @@ const Multiplayer = {
     partyAction(data) {
         this.send({
             type: 'party-action',
+            actorName: data.actorName, // AI/monster actions icin
+            actorId: data.actorId,
             skillId: data.skillId,
             skillName: data.skillName,
             skillType: data.skillType,
@@ -182,7 +184,9 @@ const Multiplayer = {
             fighterHpAfter: data.fighterHpAfter,
             fighterManaAfter: data.fighterManaAfter,
             isCrit: data.isCrit || false,
-            actionType: data.actionType || 'skill'
+            actionType: data.actionType || 'skill',
+            monsterIndex: data.monsterIndex,
+            targetFighterIndex: data.targetFighterIndex
         });
     },
 
@@ -261,12 +265,8 @@ const Multiplayer = {
                 Game.ownedEquipment = [];
                 Game.ownedArtifacts = [];
                 Game.equipment = { head: null, body: null, legs: null, feet: null, necklace: null, ring1: null, ring2: null };
-                // Başlangıç ekipmanı: 2 rastgele COMMON parça
-                var commonEq = typeof getEquipmentByRarity === 'function' ? getEquipmentByRarity('common') : [];
-                while (Game.ownedEquipment.length < 2 && commonEq.length > 0) {
-                    var rnd = commonEq[Math.floor(Math.random() * commonEq.length)];
-                    if (rnd && Game.ownedEquipment.indexOf(rnd.id) < 0) Game.ownedEquipment.push(rnd.id);
-                }
+                // Multiplayer'da baslangic ekipmani yok (herkeste ayni olmali)
+                Game.ownedEquipment = [];
                 // Her karaktere _inv tanımla
                 Game.characters.forEach(function(c) {
                     if (!c._inv) c._inv = {
