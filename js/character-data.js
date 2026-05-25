@@ -252,7 +252,7 @@ const CHARACTERS = [
         canRevive: false,
         portrait: "assets/characters/emir.png",
         combatStats: { hp: 470, atk: 6, def: 14, spd: 10, mag: 20, mr: 16, crit: 4 },
-        characterSkills: ['emi_01','emi_02','emi_03','emi_04','emi_05'],
+        characterSkills: ['emn_01','emn_02','emn_03','emn_04','emn_05'],
         passive: { name: "İksir Ustalığı", description: "İksirler %25 daha etkili (iyileştirme ve bufflar).", effect: "potionMaster" }
     },
     {

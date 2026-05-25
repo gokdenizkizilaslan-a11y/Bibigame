@@ -1118,7 +1118,7 @@ const CombatSystem = {
             var canEat = ResourceManager.food >= 5 && self.playerHp < self.playerMaxHp;
             foodBtn.disabled = !canEat;
             foodBtn.style.opacity = canEat ? '1' : '0.5';
-            foodBtn.textContent = '🍗 Yemek Ye (5🍗 → 50HP) [' + ResourceManager.food + '🍗]';
+            foodBtn.textContent = '🍗 Yemek Ye (5🍗 → %20) [' + ResourceManager.food + '🍗]';
         }
 
         // Sırayı Bitir butonu
@@ -1648,19 +1648,20 @@ const CombatSystem = {
     eatFood() {
         if (this.state !== 'PLAYER_TURN') return;
         if (ResourceManager.food < 5) { this.addLog('Yetersiz yemek! (5 gerekli)', 'miss'); return; }
-        var heal = 50;
         if (this.isBossFight) {
             var fighter = this.fighters[this.currentFighterIndex];
             if (fighter && fighter.hp < fighter.maxHp) {
                 ResourceManager.spend(0, 0, 0); ResourceManager.food -= 5; ResourceManager.updateHUD();
+                var heal = Math.round(fighter.maxHp * 0.2);
                 fighter.hp = Math.min(fighter.maxHp, fighter.hp + heal);
-                this.addLog(fighter.name + ' yemek yedi! +' + heal + ' HP', 'heal');
+                this.addLog(fighter.name + ' yemek yedi! +' + heal + ' HP (%20)', 'heal');
             }
         } else {
             if (this.playerHp < this.playerMaxHp) {
                 ResourceManager.spend(0, 0, 0); ResourceManager.food -= 5; ResourceManager.updateHUD();
+                var heal = Math.round(this.playerMaxHp * 0.2);
                 this.playerHp = Math.min(this.playerMaxHp, this.playerHp + heal);
-                this.addLog('Yemek yedin! +' + heal + ' HP', 'heal');
+                this.addLog('Yemek yedin! +' + heal + ' HP (%20)', 'heal');
             }
         }
         this.render();
@@ -2741,14 +2742,18 @@ const CombatSystem = {
             var canEat = ResourceManager.food >= 5 && fighter.hp < fighter.maxHp;
             foodBtn.disabled = !canEat;
             foodBtn.style.opacity = canEat ? '1' : '0.5';
-            foodBtn.textContent = '🍗 Yemek Ye (5🍗 → 50HP) [' + ResourceManager.food + '🍗]';
+            foodBtn.textContent = '🍗 Yemek Ye (5🍗 → %20) [' + ResourceManager.food + '🍗]';
             foodBtn.onclick = function() {
                 if (ResourceManager.food >= 5 && fighter.hp < fighter.maxHp) {
                     ResourceManager.food -= 5; ResourceManager.updateHUD();
-                    fighter.hp = Math.min(fighter.maxHp, fighter.hp + 50);
-                    self2.addLog(fighter.name + ' yedi! +50 HP', 'heal');
+                    var heal = Math.round(fighter.maxHp * 0.2);
+                    fighter.hp = Math.min(fighter.maxHp, fighter.hp + heal);
+                    self2.addLog(fighter.name + ' yedi! +' + heal + ' HP (%20)', 'heal');
                     self2._renderPartyState();
                     self2.renderPartySkills();
+                    if (typeof Multiplayer !== 'undefined' && Multiplayer && Multiplayer.connected && Multiplayer.isParty) {
+                        Multiplayer.partyAction({ actionType: 'skill', skillName: 'Yemek Yedi', targetMonsterIndex: -1 });
+                    }
                 }
             };
         }

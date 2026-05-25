@@ -977,6 +977,13 @@ const Game = {
         var leader = lobby ? lobby.leader : null;
         var iAmIn = members.indexOf(myId) >= 0;
 
+        // Enerji kontrolu
+        var myEnergy = this.energy[myId] || 0;
+        if (myEnergy < ENERGY_COST.combat) {
+            this.log('Yetersiz enerji! (⚡' + myEnergy + '/' + ENERGY_COST.combat + ') Zindana girmek için enerjin yok.', 'negative');
+            return;
+        }
+
         // Multiplayer: sunucu uzerinden islem yap
         if (this.isMultiplayer) {
             if (iAmIn && leader === myId) {

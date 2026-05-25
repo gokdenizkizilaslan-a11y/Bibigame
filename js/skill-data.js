@@ -68,12 +68,11 @@ S('dom_04','Garaj Ustası','magic','mag',1.5,0,2,2,'enemy','MAG×1.5 + 2 tur -2 
 S('dom_05','Son Sürat','physical','atk',3.0,0,1,4,'enemy','ATK×3, ertesi tur -5 DEF.', 'character','dominic');
 
 // --- Emin (İksirci) ---
-S('emi_01','Şifa İksiri','heal','mag',2.5,0,2,2,'ally','MAG×2.5 iyileştirme.','character','emir');
-S('emi_02','Güç İksiri','buff','atk',0.0,3,2,3,'ally','2 tur +3 ATK.','character','emir');
-S('emi_03','Zırh İksiri','buff','def',0.0,3,2,3,'ally','2 tur +3 DEF.','character','emir');
-S('emi_04','Patlayıcı İksir','magic','mag',2.5,0,3,2,'enemy','MAG×2.5 hasar.','character','emir');
-S('emi_05','Duman İksiri','debuff','mag',0.0,0,3,3,'enemy','2 tur düşman %50 ıskalar.','character','emir');
-
+	S('emn_01','Şifa İksiri','heal','mag',2.5,0,2,2,'ally','MAG×2.5 iyileştirme.','character','emin');
+	S('emn_02','Güç İksiri','buff','atk',0.0,3,2,3,'ally','2 tur +3 ATK.','character','emin');
+	S('emn_03','Zırh İksiri','buff','def',0.0,3,2,3,'ally','2 tur +3 DEF.','character','emin');
+	S('emn_04','Patlayıcı İksir','magic','mag',2.5,0,3,2,'enemy','MAG×2.5 hasar.','character','emin');
+	S('emn_05','Duman İksiri','debuff','mag',0.0,0,3,3,'enemy','2 tur düşman %50 ıskalar.','character','emin');
 // --- Zeynep (Kırık Şövalye) ---
 S('zey_01','Zırh Delme','physical','atk',2.0,0,1,2,'enemy','DEFin %50sini yok sayar, ATK×2.','character','zeynep');
 S('zey_02','Kırık Kılıç','physical','atk',2.5,0,1,3,'enemy','ATK×2.5, kendine %5 hasar.','character','zeynep');
