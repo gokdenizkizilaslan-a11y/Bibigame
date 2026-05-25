@@ -980,9 +980,11 @@ const Game = {
         // Multiplayer: sunucu uzerinden islem yap
         if (this.isMultiplayer) {
             if (iAmIn && leader === myId) {
-                // Lider ve zaten icerde → sunucuya baslat
+                // Lider ve zaten icerde → canavar verisini olusturup sunucuya baslat
                 document.getElementById('party-dungeon-modal').remove();
-                Multiplayer.dungeonStart(dgSize);
+                // Host olarak canavar verisini olustur, server uzerinden tum oyunculari senkronize et
+                var monsterData = CombatSystem.generatePartyMonsters(members.length, dgSize);
+                Multiplayer.dungeonStart(dgSize, monsterData);
                 return;
             }
             if (iAmIn && leader !== myId) {
@@ -1063,7 +1065,7 @@ const Game = {
         });
         if (fighters.length >= 1) {
             this._dungeonLobbies[msg.dungeonSize] = null;
-            CombatSystem.startPartyCombat(fighters, msg.dungeonSize);
+            CombatSystem.startPartyCombat(fighters, msg.dungeonSize, msg.monsters || null);
         }
     },
 

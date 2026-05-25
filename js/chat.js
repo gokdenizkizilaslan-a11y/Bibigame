@@ -83,18 +83,19 @@ const Chat = {
     send() {
         var text = this._input.value.trim();
         if (!text) return;
-        // Kendi mesajını hemen göster (local echo)
+
+        // Multiplayer'da server'a gönder, sonra local echo
+        var isMulti = typeof Multiplayer !== 'undefined' && Multiplayer && Multiplayer.connected;
+        if (isMulti) {
+            this._lastSentId = '' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            Multiplayer.send({ type: 'chat', text: text, _id: this._lastSentId });
+        }
+
+        // Local echo
         var myName = 'Sen';
         if (typeof Game !== 'undefined') {
             var pc = Game.getPlayerCharacter ? Game.getPlayerCharacter() : null;
             if (pc) myName = pc.displayName || pc.name || 'Sen';
-        }
-        if (Multiplayer.connected) {
-            Multiplayer.send({ type: 'chat', text: text });
-            // Server broadcast back olarak da gelecek, duplicate olmasın diye
-            // receive'te son mesajla aynıysa skip'le
-            this._lastSentText = text;
-            this._lastSentTime = Date.now();
         }
         this._addMessage(myName, text, Date.now());
         this._input.value = '';
@@ -102,10 +103,9 @@ const Chat = {
     },
 
     receive(playerName, characterId, text, time) {
-        // Kendi mesajımız server'dan geri geldiyse duplicate etme
-        if (this._lastSentText === text && (Date.now() - this._lastSentTime) < 3000) {
-            this._lastSentText = null;
-            return;
+        // Kendi mesajimiz server'dan geri geldiyse duplicate etme (unique ID ile)
+        if (this._lastSentId && time && Date.now() - time < 5000) {
+            return; // Server bize geri broadcast yapmaz, ama yaparsa ID'den anlariz
         }
         this._addMessage(playerName, text, time || Date.now());
     },

@@ -161,12 +161,29 @@ const Multiplayer = {
         this.send({ type: 'dungeon-leave', dungeonSize: size });
     },
 
-    dungeonStart(size) {
-        this.send({ type: 'dungeon-start', dungeonSize: size });
+    dungeonStart(size, monsters) {
+        this.send({ type: 'dungeon-start', dungeonSize: size, monsters: monsters || null });
     },
 
     dungeonFlee(fleeMsg) {
         this.send({ type: 'dungeon-flee', fleeMsg: fleeMsg });
+    },
+
+    partyAction(data) {
+        this.send({
+            type: 'party-action',
+            skillId: data.skillId,
+            skillName: data.skillName,
+            skillType: data.skillType,
+            damage: data.damage || 0,
+            dmgType: data.dmgType || 'physical',
+            targetMonsterIdx: data.targetMonsterIdx,
+            monsterHpChanges: data.monsterHpChanges || [],
+            fighterHpAfter: data.fighterHpAfter,
+            fighterManaAfter: data.fighterManaAfter,
+            isCrit: data.isCrit || false,
+            actionType: data.actionType || 'skill'
+        });
     },
 
     handleMessage(msg) {
@@ -350,15 +367,6 @@ const Multiplayer = {
                 Game.renderCharacterBar();
                 break;
 
-            case 'all-choices-in':
-                // Eski sistemden gelen mesajlar için yedek
-                CardSystem.applyAllChoices(msg.choices);
-                break;
-
-            case 'player-chose':
-                Game.log(`${msg.playerName}: "${msg.choiceText}" seçti.`, '');
-                break;
-
             case 'game-over':
                 Game.endGame(msg.result);
                 break;
@@ -373,6 +381,13 @@ const Multiplayer = {
 
             case 'dungeon-start-combat':
                 Game._onDungeonStartCombat(msg);
+                break;
+
+            case 'party-action-bc':
+                // Parti zindaninda baska oyuncunun aksiyonunu senkronize et
+                if (CombatSystem && CombatSystem.isPartyFight && typeof CombatSystem.receivePartyAction === 'function') {
+                    CombatSystem.receivePartyAction(msg);
+                }
                 break;
 
             case 'dungeon-flee':

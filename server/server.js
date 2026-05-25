@@ -135,6 +135,9 @@ function handleMessage(ws, msg) {
         case 'dungeon-flee':
             handleDungeonFlee(ws, msg);
             break;
+        case 'party-action':
+            handlePartyAction(ws, msg);
+            break;
         case 'chat':
             handleChat(ws, msg);
             break;
@@ -537,7 +540,8 @@ function handleDungeonStart(ws, msg) {
         type: 'dungeon-start-combat',
         dungeonSize: msg.dungeonSize,
         memberIds: memberIds,
-        memberPlayers: memberPlayers
+        memberPlayers: memberPlayers,
+        monsters: msg.monsters || null // Host tarafindan gonderilen canavar verisi
     });
     // Lobileri temizle
     var state = room.getDungeonLobbyState();
@@ -560,18 +564,42 @@ function handleDungeonFlee(ws, msg) {
     });
 }
 
+function handlePartyAction(ws, msg) {
+    var room = rooms.getRoom(ws.roomCode);
+    if (!room) return;
+    var player = room.getPlayer(ws);
+    if (!player) return;
+    // Parti aksiyonunu tum uyelere broadcast et (gonderici dahil, state senkronizasyonu icin)
+    room.broadcastAll({
+        type: 'party-action-bc',
+        actorId: player.characterId,
+        actorName: player.playerName,
+        skillId: msg.skillId,
+        skillName: msg.skillName,
+        skillType: msg.skillType,
+        damage: msg.damage || 0,
+        dmgType: msg.dmgType || 'physical',
+        targetMonsterIdx: msg.targetMonsterIdx,
+        monsterHpChanges: msg.monsterHpChanges || [],
+        fighterHpAfter: msg.fighterHpAfter,
+        fighterManaAfter: msg.fighterManaAfter,
+        isCrit: msg.isCrit || false,
+        actionType: msg.actionType || 'skill' // 'skill', 'end-turn', 'flee'
+    });
+}
+
 function handleChat(ws, msg) {
     const room = rooms.getRoom(ws.roomCode);
     if (!room) return;
     const player = room.getPlayer(ws);
     if (!player) return;
-    room.broadcastAll({
+    room.broadcast({
         type: 'chat',
         playerName: player.playerName,
         characterId: player.characterId,
         text: (msg.text || '').substring(0, 200),
         time: Date.now()
-    });
+    }, ws); // Göndericiye geri gönderme (local echo zaten yapıldı)
 }
 
 // Yerel IP adreslerini bul

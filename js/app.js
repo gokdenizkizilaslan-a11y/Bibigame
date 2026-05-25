@@ -201,7 +201,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fleeBtn = document.getElementById('btn-flee');
     if (fleeBtn) {
         fleeBtn.addEventListener('click', () => {
-            if (CombatSystem.isPartyFight) CombatSystem.partyFlee();
+            if (CombatSystem.isBossFight) CombatSystem.bossFlee();
+            else if (CombatSystem.isPartyFight) CombatSystem.partyFlee();
             else CombatSystem.playerFlee();
         });
     }

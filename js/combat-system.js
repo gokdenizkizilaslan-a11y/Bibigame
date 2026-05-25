@@ -998,6 +998,7 @@ const CombatSystem = {
         this.activeBuffs = {}; this.activeDebuffs = {}; this.skillCooldowns = {}; this.usedSkillsThisTurn = [];
         this.playerHp = 0; this.playerMaxHp = 0; this.playerMana = 0; this.playerMaxMana = 0;
         this._partySkillsBuilt = false; this._partySkillBtns = {};
+        this._isMultiplayerParty = false;
         MusicPlayer.playCategory('game');
     },
 
@@ -1555,13 +1556,13 @@ const CombatSystem = {
 
             Game.showResult('BOSS YENILDI!', story + '\n\n+' + xpGain + ' XP', {});
             Game.log(this.bossData.name + ' yenildi! +' + xpGain + ' XP', 'event');
+        } else if (result === 'FLEE') {
+            Game.showResult('Kactin!', 'Boss savasindan kactin.\nCan: ' + (this.fighters[0] ? this.fighters[0].hp : 0) + '/' + (this.fighters[0] ? this.fighters[0].maxHp : 0), {});
+            Game.log('Boss savasindan kacti.', '');
+            Game.renderCharacterBar();
         } else {
-            this.fighters.forEach(function(f) {
-                var char = Game.characters.find(function(c) { return c.id === f.char.id; });
-                if (char) char.hearts = Math.max(1, char.hearts - 1);
-            });
-            Game.showResult('Bozgun...', this.bossData.name + ' cok guclu!\n\nHerkes 1 kalp kaybetti. Guclenip tekrar dene.', { heart: -1 });
-            Game.log('Boss savasinda bozguna ugradi!', 'negative');
+            Game.showResult('Kactin!', 'Boss savasindan kactin.\nCan: ' + (this.fighters[0] ? this.fighters[0].hp : 0) + '/' + (this.fighters[0] ? this.fighters[0].maxHp : 0), {});
+            Game.log('Boss savasindan kacti.', '');
             Game.renderCharacterBar();
         }
 
@@ -1634,11 +1635,7 @@ const CombatSystem = {
         this.renderBossSkills();
         var flee = document.getElementById('btn-flee');
         if (flee) {
-            if (this.isMultiplayerBossFight) {
-                flee.style.display = 'none';
-            } else {
-                flee.style.display = 'inline-block'; flee.disabled = false; flee.style.opacity = '1'; flee.style.pointerEvents = 'auto';
-            }
+            flee.style.display = 'inline-block'; flee.disabled = false; flee.style.opacity = '1'; flee.style.pointerEvents = 'auto';
         }
         var endBtn = document.getElementById('btn-end-turn');
         if (endBtn) { endBtn.style.display = 'inline-block'; endBtn.disabled = false; endBtn.style.opacity = '1'; endBtn.style.pointerEvents = 'auto'; }
@@ -1682,6 +1679,39 @@ const CombatSystem = {
 
         if (fighter) this.addLog(fighter.name + ' turu bitirdi.', '');
         this.nextBossFighter();
+    },
+
+    bossFlee() {
+        if (this.state !== 'PLAYER_TURN' || !this.isBossFight) return;
+        var fighter = this.fighters[this.currentFighterIndex];
+        if (!fighter) return;
+
+        if (this.isMultiplayerBossFight) {
+            // Multiplayer: server'a kacis bildir
+            Multiplayer.dungeonFlee(fighter.name + ' boss savasindan kacti!');
+            // Bu fighter'i oldu/kaçtı isaretle
+            fighter.hp = 0;
+            if (fighter.char) fighter.char.hearts = Math.max(1, fighter.char.hearts - 1);
+            this.addLog(fighter.name + ' boss savasindan kacti!', 'flee');
+            this.bossFightMyTurn = false;
+            this.disableBossSkillButtons();
+            // Kalan fighter var mi kontrol et
+            var alive = this.fighters.filter(function(f) { return f.hp > 0; });
+            if (alive.length === 0) {
+                this.endBossFight('DEFEAT');
+            } else {
+                this.nextBossFighter();
+            }
+        } else {
+            // Singleplayer: direkt kac
+            this.addLog(fighter.name + ' boss savasindan kacti!', 'flee');
+            var lostHp = fighter.hp < fighter.maxHp / 2;
+            if (lostHp && fighter.char) {
+                fighter.char.hearts = Math.max(1, fighter.char.hearts - 1);
+                this.addLog('Canin yariya indiginde kacarsan 1 kalp kaybederdin!', 'negative');
+            }
+            this.endBossFight('FLEE');
+        }
     },
 
     // === MULTIPLAYER BOSS FIGHT METODLARI ===
@@ -1849,7 +1879,47 @@ const CombatSystem = {
     _partySkillsBuilt: false,
     _partySkillBtns: {},
 
-    startPartyCombat: function(fighters, dgSize) {
+    // Multiplayer: host tarafindan canavar verisi olustur (tum oyunculara gonderilmek uzere)
+    generatePartyMonsters: function(partySize, dgSize) {
+        var dz = dgSize || partySize;
+        var monsterCount, minLevel, maxLevel;
+        if (dz <= 1) { monsterCount = 1 + Math.floor(Math.random() * 3); minLevel = 0; maxLevel = 0; }
+        else if (dz === 2) { monsterCount = 3 + Math.floor(Math.random() * 4); minLevel = 0; maxLevel = 5; }
+        else if (dz === 3) { monsterCount = 5 + Math.floor(Math.random() * 5); minLevel = 0; maxLevel = 10; }
+        else if (dz === 4) { monsterCount = 6 + Math.floor(Math.random() * 6); minLevel = 5; maxLevel = 15; }
+        else if (dz === 5) { monsterCount = 7 + Math.floor(Math.random() * 8); minLevel = 10; maxLevel = 20; }
+        else if (dz === 6) { monsterCount = 8 + Math.floor(Math.random() * 9); minLevel = 15; maxLevel = 25; }
+        else { monsterCount = 10 + Math.floor(Math.random() * 11); minLevel = 15; maxLevel = 30; }
+        var minRarity = null;
+        var rarityOrder2 = ['D','C','B','A','S','SS'];
+        if (dz >= 7) minRarity = 'A';
+        else if (dz >= 6) minRarity = 'B';
+        else if (dz >= 5) minRarity = 'C';
+        var minRarityIdx = minRarity ? rarityOrder2.indexOf(minRarity) : -1;
+        var monsters = [];
+        for (var i = 0; i < monsterCount; i++) {
+            var levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+            var m = getRandomMonster(Game.day + levelOffset);
+            if (minRarityIdx >= 0) {
+                var retries = 0;
+                while (rarityOrder2.indexOf(m.rarity) < minRarityIdx && retries < 30) {
+                    levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+                    m = getRandomMonster(Game.day + levelOffset);
+                    retries++;
+                }
+            }
+            m.hp = Math.round(m.hp * (1 + (partySize || 1) * 0.15));
+            monsters.push({
+                id: m.id, name: m.name, hp: m.hp, attackBonus: m.attackBonus,
+                damageDie: m.damageDie, speed: m.speed || 8, dmgType: m.dmgType || 'physical',
+                rewards: m.rewards || {gold:0,food:0,wood:0}, rarity: m.rarity || 'D', tier: m.tier || 1,
+                defense: m.defense || (m.def || 0), mr: m.mr || 0
+            });
+        }
+        return monsters;
+    },
+
+    startPartyCombat: function(fighters, dgSize, preGeneratedMonsters) {
         if (this.state !== 'IDLE') { this.hide(); }
         this.state = 'INTRO';
         this.isPartyFight = true;
@@ -1863,6 +1933,7 @@ const CombatSystem = {
         this._partySkillBtns = {};
         this.partyUsedSkills = {};
         this.partyCooldowns = {};
+        this._isMultiplayerParty = Game.isMultiplayer && Multiplayer && Multiplayer.connected;
 
         // Karakterleri hazırla
         var self = this;
@@ -1893,56 +1964,66 @@ const CombatSystem = {
         // Canavar grubu (zindan büyüklüğüne göre)
         var partySize = fighters.length;
         var dz = this.dungeonSize || partySize;
-        var monsterCount, minLevel, maxLevel;
-        if (dz <= 1) {
-            monsterCount = 1 + Math.floor(Math.random() * 3); // 1-3
-            minLevel = 0; maxLevel = 0; // D only
-        } else if (dz === 2) {
-            monsterCount = 3 + Math.floor(Math.random() * 4); // 3-6
-            minLevel = 0; maxLevel = 5;  // D-C
-        } else if (dz === 3) {
-            monsterCount = 5 + Math.floor(Math.random() * 5); // 5-9
-            minLevel = 0; maxLevel = 10; // D-C-B
-        } else if (dz === 4) {
-            monsterCount = 6 + Math.floor(Math.random() * 6); // 6-11
-            minLevel = 5; maxLevel = 15;  // C-B-A
-        } else if (dz === 5) {
-            monsterCount = 7 + Math.floor(Math.random() * 8); // 7-14
-            minLevel = 10; maxLevel = 20; // B-A-S
-        } else if (dz === 6) {
-            monsterCount = 8 + Math.floor(Math.random() * 9); // 8-16
-            minLevel = 15; maxLevel = 25; // A-S
+
+        if (preGeneratedMonsters && preGeneratedMonsters.length > 0) {
+            // Multiplayer: server uzerinden gelen senkronize canavar verisi
+            this.partyMonsters = preGeneratedMonsters.map(function(m, i) {
+                m.currentHp = m.hp;
+                m.maxHp = m.hp;
+                m.index = i;
+                return m;
+            });
         } else {
-            monsterCount = 10 + Math.floor(Math.random() * 11); // 10-20
-            minLevel = 15; maxLevel = 30; // A-SS
-        }
-        // Zindan büyüklüğüne göre minimum nadirlik
-        var minRarity = null;
-        var rarityOrder2 = ['D','C','B','A','S','SS'];
-        if (dz >= 7) minRarity = 'A';
-        else if (dz >= 6) minRarity = 'B';
-        else if (dz >= 5) minRarity = 'C';
-        var minRarityIdx = minRarity ? rarityOrder2.indexOf(minRarity) : -1;
-        this.partyMonsters = [];
-        for (var i = 0; i < monsterCount; i++) {
-            var levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
-            var m = getRandomMonster(Game.day + levelOffset);
-            // Minimum nadirlik filtresi
-            if (minRarityIdx >= 0) {
-                var retries = 0;
-                while (rarityOrder2.indexOf(m.rarity) < minRarityIdx && retries < 30) {
-                    levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
-                    m = getRandomMonster(Game.day + levelOffset);
-                    retries++;
-                }
+            // Singleplayer: local olarak canavar uret
+            var monsterCount, minLevel, maxLevel;
+            if (dz <= 1) {
+                monsterCount = 1 + Math.floor(Math.random() * 3); // 1-3
+                minLevel = 0; maxLevel = 0;
+            } else if (dz === 2) {
+                monsterCount = 3 + Math.floor(Math.random() * 4); // 3-6
+                minLevel = 0; maxLevel = 5;
+            } else if (dz === 3) {
+                monsterCount = 5 + Math.floor(Math.random() * 5); // 5-9
+                minLevel = 0; maxLevel = 10;
+            } else if (dz === 4) {
+                monsterCount = 6 + Math.floor(Math.random() * 6); // 6-11
+                minLevel = 5; maxLevel = 15;
+            } else if (dz === 5) {
+                monsterCount = 7 + Math.floor(Math.random() * 8); // 7-14
+                minLevel = 10; maxLevel = 20;
+            } else if (dz === 6) {
+                monsterCount = 8 + Math.floor(Math.random() * 9); // 8-16
+                minLevel = 15; maxLevel = 25;
+            } else {
+                monsterCount = 10 + Math.floor(Math.random() * 11); // 10-20
+                minLevel = 15; maxLevel = 30;
             }
-            m.currentHp = m.hp;
-            m.maxHp = m.hp;
-            if (partySize >= 2) m.hp = Math.round(m.hp * (1 + partySize * 0.15));
-            m.currentHp = m.hp;
-            m.maxHp = m.hp;
-            m.index = i;
-            this.partyMonsters.push(m);
+            var minRarity = null;
+            var rarityOrder2 = ['D','C','B','A','S','SS'];
+            if (dz >= 7) minRarity = 'A';
+            else if (dz >= 6) minRarity = 'B';
+            else if (dz >= 5) minRarity = 'C';
+            var minRarityIdx = minRarity ? rarityOrder2.indexOf(minRarity) : -1;
+            this.partyMonsters = [];
+            for (var i = 0; i < monsterCount; i++) {
+                var levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+                var m = getRandomMonster(Game.day + levelOffset);
+                if (minRarityIdx >= 0) {
+                    var retries = 0;
+                    while (rarityOrder2.indexOf(m.rarity) < minRarityIdx && retries < 30) {
+                        levelOffset = minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+                        m = getRandomMonster(Game.day + levelOffset);
+                        retries++;
+                    }
+                }
+                m.currentHp = m.hp;
+                m.maxHp = m.hp;
+                if (partySize >= 2) m.hp = Math.round(m.hp * (1 + partySize * 0.15));
+                m.currentHp = m.hp;
+                m.maxHp = m.hp;
+                m.index = i;
+                this.partyMonsters.push(m);
+            }
         }
 
         // Tur sırası: SPD'ye göre hepsini sırala
@@ -2307,6 +2388,25 @@ const CombatSystem = {
             this._playArenaFlash(skill.type === 'magic' ? 'purple' : 'red');
         }
 
+        // Multiplayer: aksiyonu server'a broadcast et (senkronizasyon)
+        if (this._isMultiplayerParty) {
+            var monsterHpChanges = this.partyMonsters.filter(function(m) { return m.currentHp >= 0; }).map(function(m) {
+                return { index: m.index, currentHp: m.currentHp, maxHp: m.maxHp };
+            });
+            Multiplayer.partyAction({
+                skillId: skill.id,
+                skillName: skill.name,
+                skillType: skill.type,
+                damage: dmg,
+                dmgType: skill.type === 'magic' ? 'magic' : 'physical',
+                targetMonsterIdx: targetMon ? targetMon.index : -1,
+                monsterHpChanges: monsterHpChanges,
+                fighterHpAfter: { hp: fighter.hp, maxHp: fighter.maxHp, mana: fighter.mana, maxMana: fighter.maxMana },
+                isCrit: false,
+                actionType: 'skill'
+            });
+        }
+
         this._renderPartyState();
         this.renderPartySkills();
 
@@ -2337,9 +2437,61 @@ const CombatSystem = {
         var fighter = this.partyFighters[entry.index];
         if (!fighter || !fighter.isMyChar) return;
         this.addLog(fighter.name + ' turu bitirdi.', '');
+        if (this._isMultiplayerParty) {
+            Multiplayer.partyAction({
+                actionType: 'end-turn',
+                skillName: 'Sirasini bitirdi',
+                fighterHpAfter: { hp: fighter.hp, maxHp: fighter.maxHp, mana: fighter.mana, maxMana: fighter.maxMana },
+                monsterHpChanges: []
+            });
+        }
         this.partyTurnIdx = (this.partyTurnIdx + 1) % this.partyTurnOrder.length;
         var self = this;
         setTimeout(function() { self._startPartyTurn(); }, 300);
+    },
+
+    // Multiplayer parti zindani: baska oyuncunun aksiyonunu uygula
+    receivePartyAction: function(msg) {
+        if (!this.isPartyFight) return;
+
+        // Monster HP guncellemelerini uygula
+        if (msg.monsterHpChanges && msg.monsterHpChanges.length > 0) {
+            var self = this;
+            msg.monsterHpChanges.forEach(function(hpData) {
+                var mon = self.partyMonsters.find(function(m) { return m.index === hpData.index; });
+                if (mon) {
+                    mon.currentHp = hpData.currentHp;
+                    mon.maxHp = hpData.maxHp;
+                }
+            });
+        }
+
+        // Fighter HP/mana guncelle
+        if (msg.fighterHpAfter) {
+            var actor = this.partyFighters.find(function(f) { return f.name === msg.actorName; });
+            if (actor) {
+                actor.hp = msg.fighterHpAfter.hp;
+                actor.maxHp = msg.fighterHpAfter.maxHp;
+                actor.mana = msg.fighterHpAfter.mana;
+                actor.maxMana = msg.fighterHpAfter.maxMana;
+            }
+        }
+
+        // Log mesaji
+        if (msg.actionType === 'skill' && msg.skillName) {
+            if (msg.damage > 0) {
+                this.addLog(msg.actorName + ': ' + msg.skillName + '! -' + msg.damage + ' HP', 'hit');
+            } else if (msg.skillType === 'heal') {
+                this.addLog(msg.actorName + ': ' + msg.skillName + '!', 'heal');
+            } else {
+                this.addLog(msg.actorName + ': ' + msg.skillName + '!', 'player');
+            }
+        } else if (msg.actionType === 'end-turn') {
+            this.addLog(msg.actorName + ' turu bitirdi.', '');
+        }
+
+        this._renderPartyState();
+        this.renderPartySkills();
     },
 
     partyFlee: function() {

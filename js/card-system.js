@@ -52,20 +52,11 @@ const CardSystem = {
         const character = Game.getPlayerCharacter();
 
         if (Game.isMultiplayer && Multiplayer && Multiplayer.connected) {
-            // Multiplayer - rastgele seçim gönder
+            // Multiplayer - rastgele seçimi local uygula
             const card = this.drawnCards[0];
             const choice = card.choices[Math.floor(Math.random() * card.choices.length)];
             this.selectedChoice = { card, choice, letter: '⏰' };
-            const effects = this.computeEffects(card, choice, character);
-            this.disableChoices();
-            Multiplayer.send({
-                type: 'card-choice',
-                characterId: character.id,
-                playerName: character.displayName || character.name,
-                choiceText: choice.text,
-                choiceIndex: card.choices.indexOf(choice),
-                effects: effects
-            });
+            this.applyChoiceToPlayer(card, choice, character);
             Game.log('⏰ Süre doldu! Rastgele seçim yapıldı.', '');
         } else {
             // Single player - rastgele seçim uygula
@@ -257,16 +248,15 @@ const CardSystem = {
             return;
         }
 
-        // Multiplayer: sunucuya gonder, bekle
-        const effects = this.computeEffects(card, choice, character);
-        this.disableChoices();
+        // Multiplayer: kader kartlari bireysel oldugu icin local uygula + bilgilendir
+        this.applyChoiceToPlayer(card, choice, character);
         Multiplayer.send({
-            type: 'card-choice',
+            type: 'player-action',
             characterId: character.id,
             playerName: character.displayName || character.name,
+            actionType: 'kader',
             choiceText: choice.text,
-            choiceIndex: card.choices.indexOf(choice),
-            effects: effects
+            done: Game.playerDone[character.id]
         });
     },
 
