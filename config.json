@@ -176,10 +176,10 @@
     },
     "emir": {
       "hp": 540,
-      "atk": 39,
+      "atk": 90,
       "def": 15,
       "mr": 9,
-      "mag": 30,
+      "mag": 100,
       "spd": 200,
       "crit": 50
     },
@@ -326,19 +326,19 @@
     "_aciklama": "Ekipman dusme oranlari (yuzde).",
     "normal": {
       "_aciklama": "Normal dusmanlardan dusme oranlari",
-      "common": 35,
-      "uncommon": 30,
-      "rare": 25,
-      "mythic": 8,
-      "legendary": 2
+      "common": 5,
+      "uncommon": 5,
+      "rare": 20,
+      "mythic": 10,
+      "legendary": 60
     },
     "boss": {
       "_aciklama": "Bosslardan dusme oranlari (common dusmez)",
-      "uncommon": 10,
-      "rare": 35,
-      "mythic": 35,
-      "legendary": 15,
-      "ilahi": 5
+      "uncommon": 0,
+      "rare": 0,
+      "mythic": 0,
+      "legendary": 10,
+      "ilahi": 90
     }
   },
 

@@ -67,7 +67,7 @@ S('dom_03','Motivasyon','buff','atk',0.0,2,2,3,'all_allies','2 tur takım +2 ATK
 S('dom_04','Garaj Ustası','magic','mag',1.5,0,2,2,'enemy','MAG×1.5 + 2 tur -2 DEF.', 'character','dominic');
 S('dom_05','Son Sürat','physical','atk',3.0,0,1,4,'enemy','ATK×3, ertesi tur -5 DEF.', 'character','dominic');
 
-// --- Emir (İksirci) ---
+// --- Emin (İksirci) ---
 S('emi_01','Şifa İksiri','heal','mag',2.5,0,2,2,'ally','MAG×2.5 iyileştirme.','character','emir');
 S('emi_02','Güç İksiri','buff','atk',0.0,3,2,3,'ally','2 tur +3 ATK.','character','emir');
 S('emi_03','Zırh İksiri','buff','def',0.0,3,2,3,'ally','2 tur +3 DEF.','character','emir');
@@ -82,11 +82,11 @@ S('zey_04','Kraliyet Darbesi','physical','atk',3.0,0,2,3,'enemy','ATK×3 hasar.'
 S('zey_05','Son Kale','buff','def',0.0,100,3,5,'self','HP<%30 ise 2 tur dokunulmazlık.','character','zeynep');
 
 // --- Emir (Avcı) ---
-S('emr_01','Babanne Bastonu','physical','atk',2.5,0,0,2,'enemy','ATK×2.5, babaannenin bastonunu fırlatır.','character','emir');
-S('emr_02','Babanne Ruhu','magic','mag',2.0,0,2,2,'enemy','MAG×2, babaannenin ruhu saldırır.','character','emir');
-S('emr_03','Avcı Oku','physical','atk',2.0,0,0,1,'enemy','ATK×2 menzilli hasar.','character','emir');
-S('emr_04','Kapan','physical','atk',3.0,0,0,3,'enemy','ATK×3 tuzak hasarı.','character','emir');
-S('emr_05','Tuvalet Korkusu','debuff','atk',0.0,3,0,3,'enemy','2 tur -3 ATK, korku bulaşıcıdır.','character','emir');
+S('emi_01','Babanne Bastonu','physical','atk',2.5,0,0,2,'enemy','ATK×2.5, babaannenin bastonunu fırlatır.','character','emin');
+S('emi_02','Babanne Ruhu','magic','mag',5.5,0,2,1,'all_enemies','MAG×4.5, babaannenin ruhu herkese saldırır ve hatrı sayılır bir hasar verir.','character','emin');
+S('emi_03','Avcı Oku','physical','atk',2.0,0,0,1,'enemy','ATK×2 menzilli hasar.','character','emin');
+S('emi_04','Kapan','physical','atk',3.0,0,0,1,'enemy','ATK×3 tuzak hasarı.','character','emin');
+S('emi_05','Tuvalet Korkusu','buff','atk',0.0,20,0,3,'self','babannesi onu heyecanlandırarak güclendirir','character','emin');
 
 // --- Bora (Müzisyen) ---
 S('bor_01','Melodi','magic','mag',2.0,0,2,1,'enemy','MAG×2 büyü hasarı.','character','bora');
