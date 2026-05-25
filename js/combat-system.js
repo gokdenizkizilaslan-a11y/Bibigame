@@ -2174,19 +2174,11 @@ const CombatSystem = {
                 this.renderPartySkills();
                 this.addLog('Sıra ' + fighter.name + '\'de!', 'player');
             } else if (this._isMultiplayerParty) {
-                // Multiplayer: baska oyuncunun karakteri
-                if (this._isHost) {
-                    // HOST: AI ile oynat, sonucu broadcast et
-                    this.addLog('Sıra ' + fighter.name + '\'de. (AI)', '');
-                    this.renderPartySkills();
-                    var self2 = this;
-                    setTimeout(function() { self2._partyAIAction(fighter, active.index); }, 600);
-                } else {
-                    // HOST DEGIL: bekle, broadcast gelince tur ilerleyecek
-                    this.state = 'WAITING';
-                    this._multiplayerWaitTurn = true;
-                    this.addLog(fighter.name + ' düşünüyor...', '');
-                }
+                // Multiplayer: baska oyuncunun karakteri - hem host hem client beklemeli!
+                this.state = 'WAITING';
+                this._multiplayerWaitTurn = true;
+                this.addLog(fighter.name + ' düşünüyor...', '');
+                this.renderPartySkills(); // Button ve skill alanini guncelle
                 return;
             } else {
                 // Singleplayer AI
@@ -2636,7 +2628,7 @@ const CombatSystem = {
 
         // Turu ilerlet (sadece tur gerçekten bittiğinde)
         // skill broadcast'leri tek tek gelir, her birinde tur atlanmamalı
-        if (this._isMultiplayerParty && !this._isHost) {
+        if (this._isMultiplayerParty) {
             var shouldAdvance = (msg.actionType === 'end-turn') || msg.aiControlled;
             if (shouldAdvance) {
                 this._multiplayerWaitTurn = false;
@@ -2703,36 +2695,65 @@ const CombatSystem = {
     },
 
     renderPartySkills: function() {
+        var self = this;
         var container = document.getElementById('combat-skills');
         if (!container) return;
+
+        var foodBtn = document.getElementById('btn-eat-food');
+        var endBtn = document.getElementById('btn-end-turn');
+        var fleeBtn = document.getElementById('btn-flee');
+
         var entry = this.partyTurnOrder[this.partyTurnIdx];
-        if (!entry || entry.type !== 'player' || this.state !== 'PLAYER_TURN') {
+        if (!entry) {
+            if (foodBtn) foodBtn.style.display = 'none';
+            if (endBtn) endBtn.style.display = 'none';
+            if (fleeBtn) fleeBtn.style.display = 'none';
             container.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.75rem;">Bekleniyor...</p>';
             return;
         }
-        var fighter = this.partyFighters[entry.index];
-        // Multiplayer: sadece kendi karakterinin skill'lerini göster
-        if (!fighter.isMyChar) {
-            container.innerHTML = '<p style=\"color:var(--text-dim);text-align:center;font-size:0.75rem;\">🔄 ' + fighter.name + ' hamle yapıyor...</p>';
+
+        // Sırası olmayan veya PLAYER_TURN durumunda olmayan oyuncular için butonları gizle ve metin yazdır
+        if (entry.type !== 'player' || this.state !== 'PLAYER_TURN') {
+            if (foodBtn) foodBtn.style.display = 'none';
+            if (endBtn) endBtn.style.display = 'none';
+            if (fleeBtn) fleeBtn.style.display = 'none';
+
+            if (entry.type === 'monster') {
+                var m = this.partyMonsters[entry.index];
+                container.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.75rem;">💀 ' + m.name + ' hamle yapıyor...</p>';
+            } else {
+                var fighter = this.partyFighters[entry.index];
+                container.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.75rem;">🔄 ' + fighter.name + ' hamle yapıyor...</p>';
+            }
             return;
         }
+
+        var fighter = this.partyFighters[entry.index];
+        // Multiplayer: sadece kendi karakterinin skill'lerini göster, başkasınınsa butonları gizle
+        if (!fighter.isMyChar) {
+            if (foodBtn) foodBtn.style.display = 'none';
+            if (endBtn) endBtn.style.display = 'none';
+            if (fleeBtn) fleeBtn.style.display = 'none';
+            container.innerHTML = '<p style="color:var(--text-dim);text-align:center;font-size:0.75rem;">🔄 ' + fighter.name + ' hamle yapıyor...</p>';
+            return;
+        }
+
         if (!this._partySkillsBuilt || this._partySkillsFor !== fighter.name) {
             this._partySkillsBuilt = true;
             this._partySkillsFor = fighter.name;
             this._partySkillBtns = {};
             container.innerHTML = '';
-            var self = this;
             fighter.skills.forEach(function(skill) {
                 var icon = skill.type === 'physical' ? '⚔️' : skill.type === 'magic' ? '🔮' : skill.type === 'heal' ? '💚' : skill.type === 'buff' ? '🛡️' : skill.type === 'debuff' ? '💀' : '❓';
                 var typeLabel = skill.type === 'physical' ? 'Fiziksel' : skill.type === 'magic' ? 'Büyü' : skill.type === 'heal' ? 'Şifa' : skill.type === 'buff' ? 'Güçlendirme' : skill.type === 'debuff' ? 'Zayıflatma' : 'Özel';
                 var scaleLabel = skill.scaleStat === 'atk' ? 'ATK' : skill.scaleStat === 'mag' ? 'BÜYÜ' : skill.scaleStat === 'def' ? 'DEF' : skill.scaleStat === 'spd' ? 'HIZ' : 'CAN';
                 var dmgInfo = skill.type === 'heal' ? (scaleLabel + '×' + skill.scaleFactor + ' iyileştirme') : skill.type === 'buff' || skill.type === 'debuff' ? skill.description : (scaleLabel + '×' + skill.scaleFactor + (skill.baseEffect > 0 ? ' +' + skill.baseEffect : '') + ' hasar');
-                var tt = '<div class=\"skill-tooltip\"><b>' + skill.name + '</b><br>' +
-                    '<span class=\"tt-type\">' + typeLabel + '</span> | ' + dmgInfo + '<br>' +
+                var tt = '<div class="skill-tooltip"><b>' + skill.name + '</b><br>' +
+                    '<span class="tt-type">' + typeLabel + '</span> | ' + dmgInfo + '<br>' +
                     (skill.manaCost > 0 ? '💧Mana: ' + skill.manaCost + ' | ' : '') +
                     '⏳CD: ' + skill.cooldown + ' tur' +
                     (skill.target === 'all_enemies' ? ' | 🎯 Alan hasarı' : skill.target === 'all_allies' ? ' | 🎯 Tüm takım' : '') +
-                    '<br><span style=\"font-size:0.6rem;color:#999\">' + skill.description + '</span></div>';
+                    '<br><span style="font-size:0.6rem;color:#999">' + skill.description + '</span></div>';
                 var btn = document.createElement('div');
                 btn.className = 'skill-card';
                 btn.setAttribute('data-skill-id', skill.id);
@@ -2744,25 +2765,23 @@ const CombatSystem = {
             });
         } else {
             // Update states only
-            var self2 = this;
             var used = this.partyUsedSkills[fighter.name] || [];
             var cds = this.partyCooldowns[fighter.name] || {};
             var anyMissing2 = false;
             fighter.skills.forEach(function(skill) {
-                var btn = self2._partySkillBtns[skill.id];
+                var btn = self._partySkillBtns[skill.id];
                 if (!btn) { anyMissing2 = true; return; }
                 var canUse = fighter.mana >= skill.manaCost &&
                     used.indexOf(skill.id) < 0 &&
                     (!skill.cooldown || !cds[skill.id] || cds[skill.id] <= 0);
                 btn.classList.toggle('disabled', !canUse);
             });
-            if (anyMissing2) { self2._partySkillsBuilt = false; self2.renderPartySkills(); return; }
+            if (anyMissing2) { self._partySkillsBuilt = false; self.renderPartySkills(); return; }
         }
 
         // Yemek Ye butonu
-        var foodBtn = document.getElementById('btn-eat-food');
         if (foodBtn) {
-            foodBtn.style.display = this.state === 'PLAYER_TURN' ? 'inline-block' : 'none';
+            foodBtn.style.display = 'inline-block';
             var canEat = ResourceManager.food >= 5 && fighter.hp < fighter.maxHp;
             foodBtn.disabled = !canEat;
             foodBtn.style.opacity = canEat ? '1' : '0.5';
@@ -2772,9 +2791,9 @@ const CombatSystem = {
                     ResourceManager.food -= 5; ResourceManager.updateHUD();
                     var heal = Math.round(fighter.maxHp * 0.2);
                     fighter.hp = Math.min(fighter.maxHp, fighter.hp + heal);
-                    self2.addLog(fighter.name + ' yedi! +' + heal + ' HP (%20)', 'heal');
-                    self2._renderPartyState();
-                    self2.renderPartySkills();
+                    self.addLog(fighter.name + ' yedi! +' + heal + ' HP (%20)', 'heal');
+                    self._renderPartyState();
+                    self.renderPartySkills();
                     if (typeof Multiplayer !== 'undefined' && Multiplayer && Multiplayer.connected && Multiplayer.isParty) {
                         Multiplayer.partyAction({ actionType: 'skill', skillName: 'Yemek Yedi', targetMonsterIndex: -1 });
                     }
@@ -2783,14 +2802,12 @@ const CombatSystem = {
         }
 
         // Sırayı Bitir
-        var endBtn = document.getElementById('btn-end-turn');
         if (endBtn) {
-            endBtn.style.display = this.state === 'PLAYER_TURN' ? 'block' : 'none';
+            endBtn.style.display = 'block';
         }
         // Kaç
-        var fleeBtn = document.getElementById('btn-flee');
         if (fleeBtn) {
-            fleeBtn.style.display = this.state === 'PLAYER_TURN' ? 'inline-block' : 'none';
+            fleeBtn.style.display = 'inline-block';
             fleeBtn.disabled = false;
             fleeBtn.style.opacity = '1';
             fleeBtn.style.pointerEvents = 'auto';
